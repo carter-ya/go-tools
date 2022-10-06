@@ -60,6 +60,7 @@ type Stream interface {
 	Done(opts ...Option)
 }
 
+// From returns a stream from the given generator function
 func From(generator GenerateFunc, opts ...Option) Stream {
 	source := make(chan any)
 	go func() {
@@ -87,6 +88,7 @@ func Range(startInclude, endExclusive int64, opts ...Option) Stream {
 	}, opts...)
 }
 
+// Just returns a stream of the given items
 func Just(items []any, opts ...Option) Stream {
 	source := make(chan any)
 	go func() {
@@ -104,6 +106,7 @@ func Just(items []any, opts ...Option) Stream {
 	return cs
 }
 
+// Concat concatenates the given streams to a single stream
 func Concat(first Stream, other []Stream, opts ...Option) Stream {
 	return first.Concat(other, opts...)
 }
