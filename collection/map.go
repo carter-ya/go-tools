@@ -42,13 +42,3 @@ func ComputeIfAbsent[K comparable, V any](m map[K]V, key K, mapping func(k K) V)
 	m[key] = value
 	return value
 }
-
-// ComputeIfPresent computes the value for the given key if it exists.
-func ComputeIfPresent[K comparable, V any](m map[K]V, key K, mapping func(k K, v V) V) V {
-	if value, ok := m[key]; ok {
-		value = mapping(key, value)
-		m[key] = value
-		return value
-	}
-	return nil
-}

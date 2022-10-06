@@ -239,3 +239,40 @@ func TestConcurrentStream_Sort(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_Distinct(t *testing.T) {
+	tests := []struct {
+		name        string
+		parallelism uint
+		stream      Stream
+		expectItems []any
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			parallelism: 1,
+			stream:      Concat(Range(0, 1000, WithSync()), []Stream{Range(0, 1000, WithSync())}),
+			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			parallelism: 4,
+			stream:      Concat(Range(0, 1000, WithSync()), []Stream{Range(0, 1000, WithSync())}),
+			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			items := test.stream.ToIfaceSlice()
+			collection.Shuffle(items)
+
+			actualItems := Just(items, WithParallelism(test.parallelism)).Distinct(func(item any) any {
+				return item
+			}).ToIfaceSlice()
+			sort.Slice(actualItems, func(i, j int) bool {
+				return actualItems[i].(int64) < actualItems[j].(int64)
+			})
+
+			require.Equal(t, test.expectItems, actualItems)
+		})
+	}
+}
