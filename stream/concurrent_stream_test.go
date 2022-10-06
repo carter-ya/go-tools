@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"github.com/carter-ya/go-tools/slice"
 	"github.com/stretchr/testify/require"
 	"sort"
 	"testing"
@@ -198,6 +199,43 @@ func TestConcurrentStream_Concat(t *testing.T) {
 				})
 			}
 			require.ElementsMatch(t, test.expectItems, actualItems)
+		})
+	}
+}
+
+func TestConcurrentStream_Sort(t *testing.T) {
+	tests := []struct {
+		name        string
+		parallelism uint
+		stream      *concurrentStream
+		expectItems []any
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			parallelism: 1,
+			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
+			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			parallelism: 4,
+			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
+			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			items := test.stream.ToIfaceSlice()
+			slice.Shuffle(items)
+
+			actualItems := Just(items, WithParallelism(test.parallelism)).Sort(func(i, j any) bool {
+				return i.(int64) < j.(int64)
+			}).ToIfaceSlice()
+			sort.Slice(actualItems, func(i, j int) bool {
+				return actualItems[i].(int64) < actualItems[j].(int64)
+			})
+
+			require.Equal(t, test.expectItems, actualItems)
 		})
 	}
 }
