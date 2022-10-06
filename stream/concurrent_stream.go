@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"math"
 	"sort"
 	"sync"
 )
@@ -167,7 +168,7 @@ func (cs *concurrentStream) Count(opts ...Option) int64 {
 	return cs.Reduce(int64(0), func(identity any, item any) any {
 		cnt := identity.(int64) + 1
 		if cnt < 0 {
-			panic("stream: count overflow")
+			cnt = math.MaxInt64
 		}
 		return cnt
 	},
