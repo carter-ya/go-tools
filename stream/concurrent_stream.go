@@ -121,6 +121,24 @@ func (cs *concurrentStream) Limit(limit int64, opts ...Option) Stream {
 	return cs.newStream(out)
 }
 
+func (cs *concurrentStream) Skip(limit int64, opts ...Option) Stream {
+	cs.applyOptions(opts...)
+
+	out := make(chan any, cs.parallelism)
+	go func() {
+		defer close(out)
+
+		for item := range cs.source {
+			if limit <= 0 {
+				out <- item
+			} else {
+				limit--
+			}
+		}
+	}()
+	return cs.newStream(out)
+}
+
 func (cs *concurrentStream) Peek(consumer ConsumeFunc, opts ...Option) Stream {
 	return cs.doStream(func(item any, out chan<- any) {
 		consumer(item)

@@ -31,6 +31,8 @@ type Stream interface {
 	Sort(less LessFunc, opts ...Option) Stream
 	// Distinct removes the duplicate items in the stream
 	Distinct(distinct DistinctFunc, opts ...Option) Stream
+	// Skip skips the first n items in the stream
+	Skip(limit int64, opts ...Option) Stream
 	// Limit limits the number of items in the stream
 	Limit(limit int64, opts ...Option) Stream
 	// Peek applies the given consumer to each item in the stream
