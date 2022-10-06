@@ -1,7 +1,7 @@
 package stream
 
 import (
-	"github.com/carter-ya/go-tools/slice"
+	"github.com/carter-ya/go-tools/collection"
 	"github.com/stretchr/testify/require"
 	"sort"
 	"testing"
@@ -226,7 +226,7 @@ func TestConcurrentStream_Sort(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			items := test.stream.ToIfaceSlice()
-			slice.Shuffle(items)
+			collection.Shuffle(items)
 
 			actualItems := Just(items, WithParallelism(test.parallelism)).Sort(func(i, j any) bool {
 				return i.(int64) < j.(int64)
