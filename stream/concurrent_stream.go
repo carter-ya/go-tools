@@ -73,13 +73,19 @@ func (cs *concurrentStream) Concat(streams []Stream, opts ...Option) Stream {
 	concatStreams := append([]Stream{cs}, streams...)
 	out := make(chan any, cs.parallelism)
 	go func() {
+		defer close(out)
+
+		wg := new(sync.WaitGroup)
 		for _, s := range concatStreams {
+			wg.Add(1)
 			go func(s Stream) {
+				defer wg.Done()
 				s.ForEach(func(item any) {
 					out <- item
 				})
 			}(s)
 		}
+		wg.Wait()
 	}()
 	return cs.newStream(out)
 }

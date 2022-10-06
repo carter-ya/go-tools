@@ -164,3 +164,40 @@ func TestConcurrentStream_Filter(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_Concat(t *testing.T) {
+	tests := []struct {
+		name        string
+		stream      *concurrentStream
+		expectItems []any
+		ordered     bool
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
+			expectItems: Range(0, 4000, WithSync()).ToIfaceSlice(),
+			ordered:     true,
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			stream:      Range(0, 1000, WithParallelism(4)).(*concurrentStream),
+			expectItems: Range(0, 4000, WithSync()).ToIfaceSlice(),
+			ordered:     false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualItems := test.stream.Concat([]Stream{
+				Range(1000, 2000),
+				Range(2000, 3000),
+				Range(3000, 4000),
+			}).ToIfaceSlice()
+			if !test.ordered {
+				sort.Slice(actualItems, func(i, j int) bool {
+					return actualItems[i].(int64) < actualItems[j].(int64)
+				})
+			}
+			require.ElementsMatch(t, test.expectItems, actualItems)
+		})
+	}
+}
