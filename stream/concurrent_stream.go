@@ -176,7 +176,7 @@ func (cs *concurrentStream) Count(opts ...Option) int64 {
 }
 
 func (cs *concurrentStream) Reduce(identity any, accumulator AccumulatorFunc, opts ...Option) any {
-	cs.doStreamWithoutNewStream(func(item any) {
+	cs.doStreamWithTerminate(func(item any) {
 		identity = accumulator(identity, item)
 	},
 		opts...,
@@ -185,7 +185,7 @@ func (cs *concurrentStream) Reduce(identity any, accumulator AccumulatorFunc, op
 }
 
 func (cs *concurrentStream) ForEach(consumer ConsumeFunc, opts ...Option) {
-	cs.doStreamWithoutNewStream(func(item any) {
+	cs.doStreamWithTerminate(func(item any) {
 		consumer(item)
 	}, opts...)
 }
@@ -200,39 +200,45 @@ func (cs *concurrentStream) ToIfaceSlice(opts ...Option) []any {
 }
 
 func (cs *concurrentStream) Done(opts ...Option) {
-	cs.doStreamWithoutNewStream(func(item any) {}, opts...)
+	cs.doStreamWithTerminate(func(item any) {}, opts...)
 }
 
 func (cs *concurrentStream) doStream(fn func(item any, out chan<- any), opts ...Option) *concurrentStream {
-	return cs.doStreamWithOption(fn, true, opts...)
+	return cs.doStreamWithOption(fn, false, opts...)
 }
 
-func (cs *concurrentStream) doStreamWithoutNewStream(fn func(item any), opts ...Option) {
+func (cs *concurrentStream) doStreamWithTerminate(fn func(item any), opts ...Option) {
 	cs.doStreamWithOption(func(item any, out chan<- any) {
 		fn(item)
-	}, false, opts...)
+	}, true, opts...)
 }
 
-// doStreamWithOption is a helper function for doStream and doStreamWithoutNewStream
+// doStreamWithOption is a helper function for doStream and doStreamWithTerminate
 //
 // fn is the function that will be executed in parallel
 //
-// createNewStream is true if create new stream, otherwise false
+// terminate is true if the stream should be terminated after the function is executed
 func (cs *concurrentStream) doStreamWithOption(
 	fn func(item any, out chan<- any),
-	createNewStream bool,
+	terminate bool,
 	opts ...Option,
 ) *concurrentStream {
 	cs.applyOptions(opts...)
 
 	var out chan any
-	if createNewStream {
+	var wg *sync.WaitGroup
+	if terminate {
+		wg = new(sync.WaitGroup)
+		wg.Add(1)
+	} else {
 		out = make(chan any, cs.parallelism)
 	}
 
 	go func() {
 		defer func() {
-			if createNewStream {
+			if terminate {
+				wg.Done()
+			} else {
 				close(out)
 			}
 		}()
@@ -255,10 +261,12 @@ func (cs *concurrentStream) doStreamWithOption(
 		}
 	}()
 
-	if createNewStream {
+	if terminate {
+		wg.Wait()
+		return nil
+	} else {
 		return cs.newStream(out)
 	}
-	return nil
 }
 
 func (cs *concurrentStream) applyOptions(opts ...Option) {
