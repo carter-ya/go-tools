@@ -145,6 +145,44 @@ func (cs *concurrentStream) Skip(limit int64, opts ...Option) Stream {
 	return cs.newStream(out)
 }
 
+func (cs *concurrentStream) TakeWhile(match MatchFunc, opts ...Option) Stream {
+	cs.applyOptions(opts...)
+
+	out := make(chan any, cs.parallelism)
+	go func() {
+		defer close(out)
+
+		for item := range cs.source {
+			if match(item) {
+				out <- item
+			} else {
+				go cs.drain()
+				break
+			}
+		}
+	}()
+	return cs.newStream(out)
+}
+
+func (cs *concurrentStream) DropWhile(match MatchFunc, opts ...Option) Stream {
+	cs.applyOptions(opts...)
+
+	out := make(chan any, cs.parallelism)
+	go func() {
+		defer close(out)
+
+		dropping := true
+		for item := range cs.source {
+			if dropping && match(item) {
+				continue
+			}
+			out <- item
+			dropping = false
+		}
+	}()
+	return cs.newStream(out)
+}
+
 func (cs *concurrentStream) Peek(consumer ConsumeFunc, opts ...Option) Stream {
 	return cs.doStream(func(item any, out chan<- any) {
 		consumer(item)

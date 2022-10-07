@@ -35,6 +35,14 @@ type Stream interface {
 	Skip(limit int64, opts ...Option) Stream
 	// Limit limits the number of items in the stream
 	Limit(limit int64, opts ...Option) Stream
+	// TakeWhile takes items from the stream while the given predicate is true.
+	// The first item that makes the predicate false will stop the stream.
+	//
+	// This is a short-circuiting terminal operation.
+	TakeWhile(match MatchFunc, opts ...Option) Stream
+	// DropWhile drops items from the stream while the given predicate is true.
+	// The first item that makes the predicate false will start the stream.
+	DropWhile(match MatchFunc, opts ...Option) Stream
 	// Peek applies the given consumer to each item in the stream
 	Peek(consumer ConsumeFunc, opts ...Option) Stream
 

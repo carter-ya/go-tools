@@ -334,6 +334,76 @@ func TestConcurrentStream_Limit(t *testing.T) {
 	}
 }
 
+func TestConcurrentStream_TakeWhile(t *testing.T) {
+	tests := []struct {
+		name        string
+		stream      Stream
+		expectItems []any
+		ordered     bool
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			stream:      Range(0, 1000, WithSync()),
+			expectItems: Range(0, 100, WithSync()).ToIfaceSlice(),
+			ordered:     true,
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			stream:      Range(0, 1000, WithParallelism(4)),
+			expectItems: Range(0, 100, WithSync()).ToIfaceSlice(),
+			ordered:     false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualItems := test.stream.TakeWhile(func(item any) bool {
+				return item.(int64) < 100
+			}).ToIfaceSlice()
+			if !test.ordered {
+				sort.Slice(actualItems, func(i, j int) bool {
+					return actualItems[i].(int64) < actualItems[j].(int64)
+				})
+			}
+			require.Equal(t, test.expectItems, actualItems)
+		})
+	}
+}
+
+func TestConcurrentStream_DropWhile(t *testing.T) {
+	tests := []struct {
+		name        string
+		stream      Stream
+		expectItems []any
+		ordered     bool
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			stream:      Range(0, 1000, WithSync()),
+			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+			ordered:     true,
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			stream:      Range(0, 1000, WithParallelism(4)),
+			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+			ordered:     false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualItems := test.stream.DropWhile(func(item any) bool {
+				return item.(int64) < 100
+			}).ToIfaceSlice()
+			if !test.ordered {
+				sort.Slice(actualItems, func(i, j int) bool {
+					return actualItems[i].(int64) < actualItems[j].(int64)
+				})
+			}
+			require.Equal(t, test.expectItems, actualItems)
+		})
+	}
+}
+
 func TestConcurrentStream_Peek(t *testing.T) {
 	tests := []struct {
 		name        string
