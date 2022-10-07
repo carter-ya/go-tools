@@ -558,3 +558,39 @@ func TestConcurrentStream_Count(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_Reduce(t *testing.T) {
+	tests := []struct {
+		name   string
+		stream Stream
+		expect any
+	}{
+		{
+			name:   "empty stream with no parallelism",
+			stream: Just([]any{}, WithSync()),
+			expect: int64(0),
+		},
+		{
+			name:   "empty stream with parallelism",
+			stream: Just([]any{}, WithParallelism(4)),
+			expect: int64(0),
+		},
+		{
+			name:   "non-empty stream with no parallelism",
+			stream: Range(0, 1000, WithSync()),
+			expect: int64(499500),
+		},
+		{
+			name:   "non-empty stream with parallelism",
+			stream: Range(0, 1000, WithParallelism(4)),
+			expect: int64(499500),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.expect, test.stream.Reduce(int64(0), func(a, b any) any {
+				return a.(int64) + b.(int64)
+			}, WithSync()))
+		})
+	}
+}
