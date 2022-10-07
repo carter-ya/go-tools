@@ -376,3 +376,49 @@ func TestConcurrentStream_Peek(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_AnyMatch(t *testing.T) {
+	tests := []struct {
+		name   string
+		stream Stream
+		expect bool
+	}{
+		{
+			name:   "empty stream with no parallelism",
+			stream: Just([]any{}, WithSync()),
+			expect: false,
+		},
+		{
+			name:   "empty stream with parallelism",
+			stream: Just([]any{}, WithParallelism(4)),
+			expect: false,
+		},
+		{
+			name:   "non-empty stream with no parallelism and no match",
+			stream: Range(0, 500, WithSync()),
+			expect: false,
+		},
+		{
+			name:   "non-empty stream with parallelism and no match",
+			stream: Range(0, 500, WithParallelism(4)),
+			expect: false,
+		},
+		{
+			name:   "non-empty stream with no parallelism and match",
+			stream: Range(0, 1e10, WithSync()),
+			expect: true,
+		},
+		{
+			name:   "non-empty stream with parallelism and match",
+			stream: Range(0, 1e10, WithParallelism(4)),
+			expect: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.expect, test.stream.AnyMatch(func(item any) bool {
+				return item.(int64) >= 500
+			}))
+		})
+	}
+}

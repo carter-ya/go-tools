@@ -40,12 +40,18 @@ type Stream interface {
 
 	// AnyMatch returns true if any item in the stream matches the given predicate, otherwise false.
 	// If the stream is empty, false is returned.
+	//
+	// This is a short-circuiting terminal operation.
 	AnyMatch(match MatchFunc, opts ...Option) bool
 	// AllMatch returns true if all items in the stream match the given predicate, otherwise false.
 	// If the stream is empty, true is returned.
+	//
+	// This is a short-circuiting terminal operation.
 	AllMatch(match MatchFunc, opts ...Option) bool
 	// NoneMatch returns true if no item in the stream matches the given predicate, otherwise false.
 	// If the stream is empty, true is returned.
+	//
+	// This is a short-circuiting terminal operation.
 	NoneMatch(match MatchFunc, opts ...Option) bool
 	// Count returns the number of items in the stream.
 	// If the count is greater than math.MaxInt64, math.MaxInt64 is returned.
