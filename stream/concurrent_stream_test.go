@@ -276,3 +276,31 @@ func TestConcurrentStream_Distinct(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_Skip(t *testing.T) {
+	tests := []struct {
+		name        string
+		parallelism uint
+		stream      Stream
+		expectItems []any
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			parallelism: 1,
+			stream:      Range(0, 1000, WithSync()),
+			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			parallelism: 4,
+			stream:      Range(0, 1000, WithSync()),
+			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualItems := test.stream.Skip(100, WithParallelism(test.parallelism)).ToIfaceSlice()
+			require.Equal(t, test.expectItems, actualItems)
+		})
+	}
+}
