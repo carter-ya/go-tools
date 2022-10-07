@@ -77,17 +77,23 @@ func (cs *concurrentStream) Concat(streams []Stream, opts ...Option) Stream {
 	go func() {
 		defer close(out)
 
-		wg := new(sync.WaitGroup)
+		semaphore := make(chan struct{}, cs.parallelism)
 		for _, s := range concatStreams {
-			wg.Add(1)
+			semaphore <- struct{}{}
 			go func(s Stream) {
-				defer wg.Done()
+				defer func() {
+					<-semaphore
+				}()
 				s.ForEach(func(item any) {
 					out <- item
 				})
 			}(s)
 		}
-		wg.Wait()
+
+		// wait for all goroutines to finish
+		for i := 0; uint(i) < cs.parallelism; i++ {
+			semaphore <- struct{}{}
+		}
 	}()
 	return cs.newStream(out)
 }

@@ -634,7 +634,7 @@ func TestConcurrentStream_FindFirst(t *testing.T) {
 			}).FindFirst()
 			require.Equal(t, test.expectFound, found)
 			if test.expectFound {
-				require.GreaterOrEqual(t, test.expect, actualItem)
+				require.GreaterOrEqual(t, actualItem, test.expect)
 			}
 		})
 	}
