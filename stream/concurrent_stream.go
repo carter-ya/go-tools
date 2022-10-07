@@ -4,6 +4,7 @@ import (
 	"math"
 	"sort"
 	"sync"
+	"sync/atomic"
 )
 
 var _ Stream = (*concurrentStream)(nil)
@@ -201,13 +202,31 @@ func (cs *concurrentStream) Peek(consumer ConsumeFunc, opts ...Option) Stream {
 func (cs *concurrentStream) AnyMatch(match MatchFunc, opts ...Option) bool {
 	cs.applyOptions(opts...)
 
+	semaphore := make(chan struct{}, cs.parallelism)
+	var result int32 = 0
 	for item := range cs.source {
-		if match(item) {
+		semaphore <- struct{}{}
+		if atomic.LoadInt32(&result) == 0 {
+			go func(item any) {
+				defer func() {
+					<-semaphore
+				}()
+
+				if match(item) {
+					atomic.StoreInt32(&result, 1)
+				}
+			}(item)
+		} else {
+			<-semaphore
 			go cs.drain()
-			return true
+			break
 		}
 	}
-	return false
+	// wait for all goroutines to finish
+	for i := 0; uint(i) < cs.parallelism; i++ {
+		semaphore <- struct{}{}
+	}
+	return atomic.LoadInt32(&result) == 1
 }
 
 func (cs *concurrentStream) AllMatch(match MatchFunc, opts ...Option) bool {
