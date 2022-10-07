@@ -13,10 +13,12 @@ type concurrentStream struct {
 	parallelism uint
 }
 
+// WithSync returns an option that sets the sync of the stream
 func WithSync() func(Stream) {
 	return WithParallelism(1)
 }
 
+// WithParallelism returns an option that sets the parallelism of the stream
 func WithParallelism(parallelism uint) func(Stream) {
 	if parallelism == 0 {
 		panic("parallelism must be greater than 0")
