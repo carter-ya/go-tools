@@ -524,3 +524,37 @@ func TestConcurrentStream_NoneMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_Count(t *testing.T) {
+	tests := []struct {
+		name   string
+		stream Stream
+		expect int64
+	}{
+		{
+			name:   "empty stream with no parallelism",
+			stream: Just([]any{}, WithSync()),
+			expect: 0,
+		},
+		{
+			name:   "empty stream with parallelism",
+			stream: Just([]any{}, WithParallelism(4)),
+			expect: 0,
+		},
+		{
+			name:   "non-empty stream with no parallelism",
+			stream: Range(0, 1000, WithSync()),
+			expect: 1000,
+		},
+		{
+			name:   "non-empty stream with parallelism",
+			stream: Range(0, 1000, WithParallelism(4)),
+			expect: 1000,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.expect, test.stream.Count())
+		})
+	}
+}

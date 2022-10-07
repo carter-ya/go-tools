@@ -196,7 +196,7 @@ func (cs *concurrentStream) Count(opts ...Option) int64 {
 		}
 		return cnt
 	},
-		append([]Option{WithSync()}, opts...)...,
+		copyAndAppend[Option](WithSync(), opts...)...,
 	).(int64)
 }
 
@@ -219,7 +219,7 @@ func (cs *concurrentStream) ToIfaceSlice(opts ...Option) []any {
 	ifaces := cs.Reduce(make([]any, 0), func(identity any, item any) any {
 		return append(identity.([]any), item)
 	},
-		append([]Option{WithSync()}, opts...)...,
+		copyAndAppend[Option](WithSync(), opts...)...,
 	)
 	return ifaces.([]any)
 }
@@ -304,4 +304,11 @@ func (cs *concurrentStream) applyOptions(opts ...Option) {
 func (cs *concurrentStream) drain() {
 	for range cs.source {
 	}
+}
+
+func copyAndAppend[T any](item T, items ...T) []T {
+	newItems := make([]T, len(items)+1)
+	copy(newItems, items)
+	newItems[len(items)] = item
+	return newItems
 }
