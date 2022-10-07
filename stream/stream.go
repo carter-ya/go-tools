@@ -53,6 +53,13 @@ type Stream interface {
 	//
 	// This is a short-circuiting terminal operation.
 	NoneMatch(match MatchFunc, opts ...Option) bool
+	// FindFirst returns the first item in the stream.
+	// If the stream is empty, nil is returned.
+	//
+	// If the stream has no encounter order, then any element may be returned.
+	//
+	// This is a short-circuiting terminal operation.
+	FindFirst(opts ...Option) (item any, found bool)
 	// Count returns the number of items in the stream.
 	// If the count is greater than math.MaxInt64, math.MaxInt64 is returned.
 	Count(opts ...Option) int64

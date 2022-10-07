@@ -188,6 +188,16 @@ func (cs *concurrentStream) NoneMatch(match MatchFunc, opts ...Option) bool {
 	return true
 }
 
+func (cs *concurrentStream) FindFirst(opts ...Option) (item any, found bool) {
+	cs.applyOptions(opts...)
+
+	for item = range cs.source {
+		go cs.drain()
+		return item, true
+	}
+	return nil, false
+}
+
 func (cs *concurrentStream) Count(opts ...Option) int64 {
 	return cs.Reduce(int64(0), func(identity any, item any) any {
 		cnt := identity.(int64) + 1

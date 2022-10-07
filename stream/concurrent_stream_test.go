@@ -525,6 +525,51 @@ func TestConcurrentStream_NoneMatch(t *testing.T) {
 	}
 }
 
+func TestConcurrentStream_FindFirst(t *testing.T) {
+	tests := []struct {
+		name        string
+		stream      Stream
+		expect      any
+		expectFound bool
+	}{
+		{
+			name:        "empty stream with no parallelism",
+			stream:      Just([]any{}, WithSync()),
+			expect:      nil,
+			expectFound: false,
+		},
+		{
+			name:        "empty stream with parallelism",
+			stream:      Just([]any{}, WithParallelism(4)),
+			expect:      nil,
+			expectFound: false,
+		},
+		{
+			name:        "non-empty stream with no parallelism",
+			stream:      Range(0, 1000, WithSync()),
+			expect:      int64(500),
+			expectFound: true,
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			stream:      Range(0, 1000, WithParallelism(4)),
+			expect:      int64(500),
+			expectFound: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualItem, found := test.stream.Filter(func(item any) bool {
+				return item.(int64) >= 500
+			}).FindFirst()
+			require.Equal(t, test.expectFound, found)
+			if test.expectFound {
+				require.GreaterOrEqual(t, test.expect, actualItem)
+			}
+		})
+	}
+}
+
 func TestConcurrentStream_Count(t *testing.T) {
 	tests := []struct {
 		name   string
