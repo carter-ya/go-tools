@@ -4,6 +4,7 @@ import (
 	"github.com/carter-ya/go-tools/collection"
 	"github.com/stretchr/testify/require"
 	"sort"
+	"sync"
 	"testing"
 )
 
@@ -329,6 +330,49 @@ func TestConcurrentStream_Limit(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actualItems := test.stream.Limit(100, WithParallelism(test.parallelism)).ToIfaceSlice()
 			require.Equal(t, test.expectItems, actualItems)
+		})
+	}
+}
+
+func TestConcurrentStream_Peek(t *testing.T) {
+	tests := []struct {
+		name        string
+		stream      Stream
+		expectItems []any
+		ordered     bool
+	}{
+		{
+			name:        "non-empty stream with no parallelism",
+			stream:      Range(0, 1000, WithSync()),
+			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			ordered:     true,
+		},
+		{
+			name:        "non-empty stream with parallelism",
+			stream:      Range(0, 1000, WithParallelism(4)),
+			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			ordered:     false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			peekItems := make([]any, 0, len(test.expectItems))
+			lock := new(sync.Mutex)
+			actualItems := test.stream.Peek(func(item any) {
+				lock.Lock()
+				defer lock.Unlock()
+				peekItems = append(peekItems, item)
+			}).ToIfaceSlice()
+			if !test.ordered {
+				sort.Slice(peekItems, func(i, j int) bool {
+					return peekItems[i].(int64) < peekItems[j].(int64)
+				})
+				sort.Slice(actualItems, func(i, j int) bool {
+					return actualItems[i].(int64) < actualItems[j].(int64)
+				})
+			}
+			require.Equal(t, test.expectItems, actualItems)
+			require.Equal(t, test.expectItems, peekItems)
 		})
 	}
 }
