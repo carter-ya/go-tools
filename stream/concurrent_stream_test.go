@@ -709,3 +709,35 @@ func TestConcurrentStream_Reduce(t *testing.T) {
 		})
 	}
 }
+
+func TestConcurrentStream_Collect(t *testing.T) {
+	tests := []struct {
+		name   string
+		stream Stream
+		expect any
+	}{
+		{
+			name:   "empty stream with no parallelism",
+			stream: Just([]any{}, WithSync()),
+			expect: map[int64]int64{},
+		},
+		{
+			name:   "non-empty stream with no parallelism",
+			stream: Range(0, 4, WithSync()),
+			expect: map[int64]int64{
+				0: 0,
+				1: 1,
+				2: 2,
+				3: 3,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.expect, test.stream.Collect(
+				MapSupplier[int64, int64](),
+				MapAccumulatorWithIgnoreDuplicate[int64, int64](Identify[int64]())),
+			)
+		})
+	}
+}

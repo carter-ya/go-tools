@@ -327,6 +327,10 @@ func (cs *concurrentStream) ToIfaceSlice(opts ...Option) []any {
 	return ifaces.([]any)
 }
 
+func (cs *concurrentStream) Collect(supplier SupplierFunc, accumulator AccumulatorFunc, opts ...Option) any {
+	return cs.Reduce(supplier(), accumulator, opts...)
+}
+
 func (cs *concurrentStream) Done(opts ...Option) {
 	cs.doStreamWithTerminate(func(item any) {}, opts...)
 }

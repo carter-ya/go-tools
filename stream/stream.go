@@ -13,9 +13,10 @@ type (
 	DistinctFunc    func(item any) any
 	AccumulatorFunc func(identity any, item any) any
 	ConsumeFunc     func(item any)
-)
+	SupplierFunc    func() any
 
-type Option func(s Stream)
+	Option func(s Stream)
+)
 
 // Stream is the interface for a stream
 type Stream interface {
@@ -77,6 +78,14 @@ type Stream interface {
 	ForEach(consumer ConsumeFunc, opts ...Option)
 	// ToIfaceSlice returns the stream as a slice of interface{}
 	ToIfaceSlice(opts ...Option) []any
+	// Collect collects the stream to a supplier of the given type.
+	//
+	// The supplier should return a new instance of the type to collect to.
+	// You can use MapSupplier to create s supplier.
+	//
+	// The accumulator should add the item to the supplier.
+	// You can use MapAccumulator to create an accumulator.
+	Collect(supplier SupplierFunc, accumulator AccumulatorFunc, opts ...Option) any
 	// Done closes the stream
 	Done(opts ...Option)
 }
