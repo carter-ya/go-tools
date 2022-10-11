@@ -74,6 +74,20 @@ func (cs *concurrentStream) Concat(streams []Stream, opts ...Option) Stream {
 	cs.applyOptions(opts...)
 
 	concatStreams := append([]Stream{cs}, streams...)
+
+	if !cs.isParallel() {
+		out := make(chan any)
+		go func() {
+			defer close(out)
+			for _, s := range concatStreams {
+				s.ForEach(func(item any) {
+					out <- item
+				})
+			}
+		}()
+		return cs.newStream(out)
+	}
+
 	out := make(chan any, cs.parallelism)
 	go func() {
 		defer close(out)
@@ -108,13 +122,24 @@ func (cs *concurrentStream) Sort(less LessFunc, opts ...Option) Stream {
 }
 
 func (cs *concurrentStream) Distinct(distinct DistinctFunc, opts ...Option) Stream {
+	cs.applyOptions(opts...)
+	if !cs.isParallel() {
+		seen := make(map[any]struct{})
+		return cs.doStream(func(item any, out chan<- any) {
+			if _, ok := seen[item]; !ok {
+				seen[item] = struct{}{}
+				out <- item
+			}
+		})
+	}
+
 	seen := new(sync.Map)
 	return cs.doStream(func(item any, out chan<- any) {
 		_, loaded := seen.LoadOrStore(distinct(item), struct{}{})
 		if !loaded {
 			out <- item
 		}
-	}, opts...)
+	})
 }
 
 func (cs *concurrentStream) Limit(limit int64, opts ...Option) Stream {
@@ -202,6 +227,16 @@ func (cs *concurrentStream) Peek(consumer ConsumeFunc, opts ...Option) Stream {
 func (cs *concurrentStream) AnyMatch(match MatchFunc, opts ...Option) bool {
 	cs.applyOptions(opts...)
 
+	if !cs.isParallel() {
+		for item := range cs.source {
+			if match(item) {
+				go cs.drain()
+				return true
+			}
+		}
+		return false
+	}
+
 	semaphore := make(chan struct{}, cs.parallelism)
 	var result int32 = 0
 	for item := range cs.source {
@@ -232,6 +267,16 @@ func (cs *concurrentStream) AnyMatch(match MatchFunc, opts ...Option) bool {
 func (cs *concurrentStream) AllMatch(match MatchFunc, opts ...Option) bool {
 	cs.applyOptions(opts...)
 
+	if !cs.isParallel() {
+		for item := range cs.source {
+			if !match(item) {
+				go cs.drain()
+				return false
+			}
+		}
+		return true
+	}
+
 	semaphore := make(chan struct{}, cs.parallelism)
 	var result int32 = 1
 	for item := range cs.source {
@@ -257,6 +302,16 @@ func (cs *concurrentStream) AllMatch(match MatchFunc, opts ...Option) bool {
 
 func (cs *concurrentStream) NoneMatch(match MatchFunc, opts ...Option) bool {
 	cs.applyOptions(opts...)
+
+	if !cs.isParallel() {
+		for item := range cs.source {
+			if match(item) {
+				go cs.drain()
+				return false
+			}
+		}
+		return true
+	}
 
 	semaphore := make(chan struct{}, cs.parallelism)
 	var result int32 = 1
@@ -356,6 +411,9 @@ func (cs *concurrentStream) doStreamWithOption(
 	opts ...Option,
 ) *concurrentStream {
 	cs.applyOptions(opts...)
+	if !cs.isParallel() {
+		return cs.doStreamWithOptionSync(fn, terminate)
+	}
 
 	var out chan any
 	var wg *sync.WaitGroup
@@ -399,6 +457,51 @@ func (cs *concurrentStream) doStreamWithOption(
 	} else {
 		return cs.newStream(out)
 	}
+}
+
+func (cs *concurrentStream) doStreamWithOptionSync(
+	fn func(item any, out chan<- any),
+	terminate bool,
+	opts ...Option,
+) *concurrentStream {
+	cs.applyOptions(opts...)
+	if cs.isParallel() {
+		return cs.doStreamWithOption(fn, terminate)
+	}
+
+	var out chan any
+	var wg *sync.WaitGroup
+	if terminate {
+		wg = new(sync.WaitGroup)
+		wg.Add(1)
+	} else {
+		out = make(chan any)
+	}
+
+	go func() {
+		defer func() {
+			if terminate {
+				wg.Done()
+			} else {
+				close(out)
+			}
+		}()
+
+		for item := range cs.source {
+			fn(item, out)
+		}
+	}()
+
+	if terminate {
+		wg.Wait()
+		return nil
+	} else {
+		return cs.newStream(out)
+	}
+}
+
+func (cs *concurrentStream) isParallel() bool {
+	return cs.parallelism > 1
 }
 
 func (cs *concurrentStream) applyOptions(opts ...Option) {
