@@ -34,13 +34,13 @@ func TestConcurrentStream_Map(t *testing.T) {
 		},
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
+			stream:      Range[int64](0, 1000, WithSync()).(*concurrentStream),
 			expectItems: From(expectItemsFunc, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)).(*concurrentStream),
+			stream:      Range[int64](0, 1000, WithParallelism(4)).(*concurrentStream),
 			expectItems: From(expectItemsFunc, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
@@ -87,13 +87,13 @@ func TestConcurrentStream_FlatMap(t *testing.T) {
 		},
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
+			stream:      Range[int64](0, 1000, WithSync()).(*concurrentStream),
 			expectItems: From(expectItemsFunc, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)).(*concurrentStream),
+			stream:      Range[int64](0, 1000, WithParallelism(4)).(*concurrentStream),
 			expectItems: From(expectItemsFunc, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
@@ -141,13 +141,13 @@ func TestConcurrentStream_Filter(t *testing.T) {
 		},
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
+			stream:      Range[int64](0, 1000, WithSync()).(*concurrentStream),
 			expectItems: From(expectItemsFunc, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)).(*concurrentStream),
+			stream:      Range[int64](0, 1000, WithParallelism(4)).(*concurrentStream),
 			expectItems: From(expectItemsFunc, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
@@ -176,23 +176,23 @@ func TestConcurrentStream_Concat(t *testing.T) {
 	}{
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
-			expectItems: Range(0, 4000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()).(*concurrentStream),
+			expectItems: Range[int64](0, 4000, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)).(*concurrentStream),
-			expectItems: Range(0, 4000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithParallelism(4)).(*concurrentStream),
+			expectItems: Range[int64](0, 4000, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actualItems := test.stream.Concat([]Stream{
-				Range(1000, 2000),
-				Range(2000, 3000),
-				Range(3000, 4000),
+				Range[int64](1000, 2000),
+				Range[int64](2000, 3000),
+				Range[int64](3000, 4000),
 			}).ToIfaceSlice()
 			if !test.ordered {
 				sort.Slice(actualItems, func(i, j int) bool {
@@ -214,14 +214,14 @@ func TestConcurrentStream_Sort(t *testing.T) {
 		{
 			name:        "non-empty stream with no parallelism",
 			parallelism: 1,
-			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
-			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()).(*concurrentStream),
+			expectItems: Range[int64](0, 1000, WithSync()).ToIfaceSlice(),
 		},
 		{
 			name:        "non-empty stream with parallelism",
 			parallelism: 4,
-			stream:      Range(0, 1000, WithSync()).(*concurrentStream),
-			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()).(*concurrentStream),
+			expectItems: Range[int64](0, 1000, WithSync()).ToIfaceSlice(),
 		},
 	}
 	for _, test := range tests {
@@ -251,14 +251,14 @@ func TestConcurrentStream_Distinct(t *testing.T) {
 		{
 			name:        "non-empty stream with no parallelism",
 			parallelism: 1,
-			stream:      Concat(Range(0, 1000, WithSync()), []Stream{Range(0, 1000, WithSync())}),
-			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Concat(Range[int64](0, 1000, WithSync()), []Stream{Range[int64](0, 1000, WithSync())}),
+			expectItems: Range[int64](0, 1000, WithSync()).ToIfaceSlice(),
 		},
 		{
 			name:        "non-empty stream with parallelism",
 			parallelism: 4,
-			stream:      Concat(Range(0, 1000, WithSync()), []Stream{Range(0, 1000, WithSync())}),
-			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Concat(Range[int64](0, 1000, WithSync()), []Stream{Range[int64](0, 1000, WithSync())}),
+			expectItems: Range[int64](0, 1000, WithSync()).ToIfaceSlice(),
 		},
 	}
 	for _, test := range tests {
@@ -288,14 +288,14 @@ func TestConcurrentStream_Skip(t *testing.T) {
 		{
 			name:        "non-empty stream with no parallelism",
 			parallelism: 1,
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](100, 1000, WithSync()).ToIfaceSlice(),
 		},
 		{
 			name:        "non-empty stream with parallelism",
 			parallelism: 4,
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](100, 1000, WithSync()).ToIfaceSlice(),
 		},
 	}
 	for _, test := range tests {
@@ -316,14 +316,14 @@ func TestConcurrentStream_Limit(t *testing.T) {
 		{
 			name:        "non-empty stream with no parallelism",
 			parallelism: 1,
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(0, 100, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](0, 100, WithSync()).ToIfaceSlice(),
 		},
 		{
 			name:        "non-empty stream with parallelism",
 			parallelism: 4,
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(0, 100, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](0, 100, WithSync()).ToIfaceSlice(),
 		},
 	}
 	for _, test := range tests {
@@ -343,14 +343,14 @@ func TestConcurrentStream_TakeWhile(t *testing.T) {
 	}{
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(0, 100, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](0, 100, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)),
-			expectItems: Range(0, 100, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithParallelism(4)),
+			expectItems: Range[int64](0, 100, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
 	}
@@ -378,14 +378,14 @@ func TestConcurrentStream_DropWhile(t *testing.T) {
 	}{
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](100, 1000, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)),
-			expectItems: Range(100, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithParallelism(4)),
+			expectItems: Range[int64](100, 1000, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
 	}
@@ -413,14 +413,14 @@ func TestConcurrentStream_Peek(t *testing.T) {
 	}{
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()),
-			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithSync()),
+			expectItems: Range[int64](0, 1000, WithSync()).ToIfaceSlice(),
 			ordered:     true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)),
-			expectItems: Range(0, 1000, WithSync()).ToIfaceSlice(),
+			stream:      Range[int64](0, 1000, WithParallelism(4)),
+			expectItems: Range[int64](0, 1000, WithSync()).ToIfaceSlice(),
 			ordered:     false,
 		},
 	}
@@ -465,22 +465,22 @@ func TestConcurrentStream_AnyMatch(t *testing.T) {
 		},
 		{
 			name:   "non-empty stream with no parallelism and no match",
-			stream: Range(0, 500, WithSync()),
+			stream: Range[int64](0, 500, WithSync()),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with parallelism and no match",
-			stream: Range(0, 500, WithParallelism(4)),
+			stream: Range[int64](0, 500, WithParallelism(4)),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with no parallelism and match",
-			stream: Range(0, 1e10, WithSync()),
+			stream: Range[int64](0, 1e10, WithSync()),
 			expect: true,
 		},
 		{
 			name:   "non-empty stream with parallelism and match",
-			stream: Range(0, 1e10, WithParallelism(4)),
+			stream: Range[int64](0, 1e10, WithParallelism(4)),
 			expect: true,
 		},
 	}
@@ -511,22 +511,22 @@ func TestConcurrentStream_AllMatch(t *testing.T) {
 		},
 		{
 			name:   "non-empty stream with no parallelism and not all match",
-			stream: Range(400, 1e10, WithSync()),
+			stream: Range[int64](400, 1e10, WithSync()),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with parallelism and not all match",
-			stream: Range(400, 1e10, WithParallelism(4)),
+			stream: Range[int64](400, 1e10, WithParallelism(4)),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with no parallelism and all match",
-			stream: Range(500, 1000, WithSync()),
+			stream: Range[int64](500, 1000, WithSync()),
 			expect: true,
 		},
 		{
 			name:   "non-empty stream with parallelism and all match",
-			stream: Range(500, 1000, WithParallelism(4)),
+			stream: Range[int64](500, 1000, WithParallelism(4)),
 			expect: true,
 		},
 	}
@@ -557,32 +557,32 @@ func TestConcurrentStream_NoneMatch(t *testing.T) {
 		},
 		{
 			name:   "non-empty stream with no parallelism and partial match",
-			stream: Range(400, 1e10, WithSync()),
+			stream: Range[int64](400, 1e10, WithSync()),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with parallelism and and partial match",
-			stream: Range(400, 1e10, WithParallelism(4)),
+			stream: Range[int64](400, 1e10, WithParallelism(4)),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with no parallelism and all match",
-			stream: Range(500, 1000, WithSync()),
+			stream: Range[int64](500, 1000, WithSync()),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with parallelism and all match",
-			stream: Range(500, 1000, WithParallelism(4)),
+			stream: Range[int64](500, 1000, WithParallelism(4)),
 			expect: false,
 		},
 		{
 			name:   "non-empty stream with no parallelism and no match",
-			stream: Range(0, 500, WithSync()),
+			stream: Range[int64](0, 500, WithSync()),
 			expect: true,
 		},
 		{
 			name:   "non-empty stream with parallelism and no match",
-			stream: Range(0, 500, WithParallelism(4)),
+			stream: Range[int64](0, 500, WithParallelism(4)),
 			expect: true,
 		},
 	}
@@ -616,13 +616,13 @@ func TestConcurrentStream_FindFirst(t *testing.T) {
 		},
 		{
 			name:        "non-empty stream with no parallelism",
-			stream:      Range(0, 1000, WithSync()),
+			stream:      Range[int64](0, 1000, WithSync()),
 			expect:      int64(500),
 			expectFound: true,
 		},
 		{
 			name:        "non-empty stream with parallelism",
-			stream:      Range(0, 1000, WithParallelism(4)),
+			stream:      Range[int64](0, 1000, WithParallelism(4)),
 			expect:      int64(500),
 			expectFound: true,
 		},
@@ -658,12 +658,12 @@ func TestConcurrentStream_Count(t *testing.T) {
 		},
 		{
 			name:   "non-empty stream with no parallelism",
-			stream: Range(0, 1000, WithSync()),
+			stream: Range[int64](0, 1000, WithSync()),
 			expect: 1000,
 		},
 		{
 			name:   "non-empty stream with parallelism",
-			stream: Range(0, 1000, WithParallelism(4)),
+			stream: Range[int64](0, 1000, WithParallelism(4)),
 			expect: 1000,
 		},
 	}
@@ -692,12 +692,12 @@ func TestConcurrentStream_Reduce(t *testing.T) {
 		},
 		{
 			name:   "non-empty stream with no parallelism",
-			stream: Range(0, 1000, WithSync()),
+			stream: Range[int64](0, 1000, WithSync()),
 			expect: int64(499500),
 		},
 		{
 			name:   "non-empty stream with parallelism",
-			stream: Range(0, 1000, WithParallelism(4)),
+			stream: Range[int64](0, 1000, WithParallelism(4)),
 			expect: int64(499500),
 		},
 	}
@@ -723,7 +723,7 @@ func TestConcurrentStream_Collect(t *testing.T) {
 		},
 		{
 			name:   "non-empty stream with no parallelism",
-			stream: Range(0, 4, WithSync()),
+			stream: Range[int64](0, 4, WithSync()),
 			expect: map[int64]int64{
 				0: 0,
 				1: 1,

@@ -61,3 +61,24 @@ func MapAccumulatorWithDuplicateHandler[K comparable, V any](
 		return m
 	}
 }
+
+// SliceSupplier returns a supplier of slice
+func SliceSupplier[V any]() SupplierFunc {
+	return func() any {
+		return make([]V, 0)
+	}
+}
+
+// SliceSupplierWithSize returns a supplier of slice with the given size
+func SliceSupplierWithSize[V any](size int) SupplierFunc {
+	return func() any {
+		return make([]V, 0, size)
+	}
+}
+
+// SliceAccumulator returns an accumulator function that accumulates the given items into a slice
+func SliceAccumulator[V any]() AccumulatorFunc {
+	return func(identity any, item any) any {
+		return append(identity.([]V), item.(V))
+	}
+}

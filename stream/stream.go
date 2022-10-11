@@ -1,5 +1,7 @@
 package stream
 
+import "golang.org/x/exp/constraints"
+
 type (
 	// source is the channel that the generator function writes to,
 	// and the generator should not close the channel
@@ -105,12 +107,12 @@ func From(generator GenerateFunc, opts ...Option) Stream {
 	return cs
 }
 
-// Range returns a stream of int64 from start (inclusive) to end (exclusive)
+// Range returns a stream of integer from start (inclusive) to end (exclusive)
 //
 // startInclude indicates whether start is included in the stream
 //
 // endExclusive indicates whether end is excluded in the stream
-func Range(startInclude, endExclusive int64, opts ...Option) Stream {
+func Range[T constraints.Integer](startInclude, endExclusive T, opts ...Option) Stream {
 	return From(func(source chan<- any) {
 		for i := startInclude; i < endExclusive; i++ {
 			source <- i
@@ -119,7 +121,7 @@ func Range(startInclude, endExclusive int64, opts ...Option) Stream {
 }
 
 // Just returns a stream of the given items
-func Just(items []any, opts ...Option) Stream {
+func Just[T any](items []T, opts ...Option) Stream {
 	source := make(chan any)
 	go func() {
 		defer close(source)
