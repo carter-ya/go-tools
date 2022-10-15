@@ -103,3 +103,35 @@ func JoiningAccumulator[V any](separator string) AccumulatorFunc {
 		return s
 	}
 }
+
+// GroupBySupplier returns a supplier of map
+func GroupBySupplier[K comparable, V any]() SupplierFunc {
+	return func() any {
+		return make(map[K][]V)
+	}
+}
+
+// GroupBySupplierWithSize returns a supplier of map with the given size
+func GroupBySupplierWithSize[K comparable, V any](size int) SupplierFunc {
+	return func() any {
+		return make(map[K][]V, size)
+	}
+}
+
+// GroupByAccumulator returns an accumulator function that accumulates the given items into a map
+func GroupByAccumulator[K comparable, V any](keyExtractor func(v V) K) AccumulatorFunc {
+	return GroupByAccumulatorWithValueExtractor(keyExtractor, Identify[V]())
+}
+
+// GroupByAccumulatorWithValueExtractor returns an accumulator function that accumulates the given items into a map
+func GroupByAccumulatorWithValueExtractor[K comparable, V, R any](
+	keyExtractor func(v V) K,
+	valueExtractor func(v V) R,
+) AccumulatorFunc {
+	return func(identity any, item any) any {
+		m := identity.(map[K][]R)
+		key := keyExtractor(item.(V))
+		m[key] = append(m[key], valueExtractor(item.(V)))
+		return m
+	}
+}

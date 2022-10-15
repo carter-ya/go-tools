@@ -25,6 +25,13 @@ func TestCollector_Joining(t *testing.T) {
 	require.Equal(t, "a:1,b:2", Just[s](expect2).Collect(JoiningSupplier[s](), JoiningAccumulator[s](",")))
 }
 
+func TestCollector_GroupBy(t *testing.T) {
+	expect := []int64{1, 2, 3, 4}
+	require.Equal(t, map[bool][]int64{true: {1, 3}, false: {2, 4}}, Just[int64](expect).Collect(GroupBySupplier[bool, int64](), GroupByAccumulator[bool, int64](func(i int64) bool {
+		return i%2 == 1
+	})))
+}
+
 var _ fmt.Stringer = (*s)(nil)
 
 type s struct {
