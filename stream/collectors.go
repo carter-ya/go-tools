@@ -1,6 +1,8 @@
 package stream
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Identify returns the given item
 func Identify[V any]() func(v V) V {
@@ -80,5 +82,24 @@ func SliceSupplierWithSize[V any](size int) SupplierFunc {
 func SliceAccumulator[V any]() AccumulatorFunc {
 	return func(identity any, item any) any {
 		return append(identity.([]V), item.(V))
+	}
+}
+
+// JoiningSupplier returns a supplier of string
+func JoiningSupplier[V any]() SupplierFunc {
+	return func() any {
+		return ""
+	}
+}
+
+// JoiningAccumulator returns an accumulator function that accumulates the given items into a string
+func JoiningAccumulator[V any](separator string) AccumulatorFunc {
+	return func(identity any, item any) any {
+		s := identity.(string)
+		if len(s) > 0 {
+			s += separator
+		}
+		s += fmt.Sprint(item)
+		return s
 	}
 }
