@@ -129,4 +129,13 @@ type HashMap[K comparable, V any] map[K]V
 How to create a HashMap
 1. `NewHashMap()`
 2. `NewHashMapWithSize(size int)`
-3. `NewHashMapFromBuiltinMap(m map[K]V)`
+3. `NewHashMapWithMap(m Map[K]V)`
+4. `NewHashMapFromBuiltinMap(m map[K]V)`
+
+##### LinkedHashMap
+It is based on the `HashMap`, so it is not thread-safe.
+
+How to create a LinkedHashMap
+1. `NewLinkedHashMap()`
+2. `NewLinkedHashMapWithSize(size int)`
+3. `NewLinkedHashMapWithMap(m Map[K]V)`
