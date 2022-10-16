@@ -386,7 +386,7 @@ func (cs *concurrentStream) Collect(supplier SupplierFunc, accumulator Accumulat
 	return cs.Reduce(supplier(), accumulator, opts...)
 }
 
-func (cs *concurrentStream) Done(opts ...Option) {
+func (cs *concurrentStream) Close(opts ...Option) {
 	cs.doStreamWithTerminate(func(item any) {}, opts...)
 }
 

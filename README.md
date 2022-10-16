@@ -77,7 +77,7 @@ More details can be found in the [stream.go](stream/stream.go) file.
 18. ForEach
 19. ToIfaceSlice
 20. Collect
-21. Done
+21. Close
 
 #### How to use `Collect`
 More details can be found in the [collectors.go](stream/collectors.go) file.

@@ -88,8 +88,8 @@ type Stream interface {
 	// The accumulator should add the item to the supplier.
 	// You can use MapAccumulator to create an accumulator.
 	Collect(supplier SupplierFunc, accumulator AccumulatorFunc, opts ...Option) any
-	// Done closes the stream
-	Done(opts ...Option)
+	// Close closes the stream
+	Close(opts ...Option)
 }
 
 // From returns a stream from the given generator function
