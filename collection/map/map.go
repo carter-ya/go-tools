@@ -65,6 +65,12 @@ func NewHashMapWithSize[K comparable, V any](size int) HashMap[K, V] {
 	return make(HashMap[K, V], size)
 }
 
+func NewHashMapFromMap[K comparable, V any](m Map[K, V]) HashMap[K, V] {
+	hm := NewHashMapWithSize[K, V](m.Size())
+	hm.PutAll(m)
+	return hm
+}
+
 // NewHashMapFromBuiltinMap creates a new HashMap from a builtin map.
 func NewHashMapFromBuiltinMap[M ~map[K]V, K comparable, V any](m M) HashMap[K, V] {
 	return HashMap[K, V](m)
