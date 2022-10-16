@@ -43,13 +43,12 @@ func PutAll[M ~map[K]V, K comparable, V any](m M, other M) {
 }
 
 // ComputeIfAbsent computes the value for the given key if it does not exist.
-func ComputeIfAbsent[M ~map[K]V, K comparable, V any](m M, key K, mapping func(k K) V) V {
-	if value, ok := m[key]; ok {
-		return value
+func ComputeIfAbsent[M ~map[K]V, K comparable, V any](m M, key K, mapping func(k K) V) {
+	if _, ok := m[key]; ok {
+		return
 	}
 	value := mapping(key)
 	m[key] = value
-	return value
 }
 
 // ComputeIfPresent computes the value for the given key if it exists.

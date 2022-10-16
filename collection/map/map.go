@@ -19,8 +19,8 @@ type Map[K comparable, V any] interface {
 	// PutAll adds all key-value pairs from the other map to this map.
 	PutAll(other Map[K, V])
 	// ComputeIfAbsent computes the value for the given key if it does not exist.
-	// If the key already exists, the existing value is returned, otherwise the value is computed and stored.
-	ComputeIfAbsent(key K, mapping func(key K) V) V
+	// If the key not exists, the value is computed and stored, otherwise the nothing happened.
+	ComputeIfAbsent(key K, mapping func(key K) V)
 	// ComputeIfPresent computes the value for the given key if it exists.
 	ComputeIfPresent(key K, remapping func(key K, oldValue V) (newValue V, action RemappingAction))
 
@@ -88,8 +88,8 @@ func (m HashMap[K, V]) PutIfAbsent(key K, newValue V) {
 	}
 }
 
-func (m HashMap[K, V]) ComputeIfAbsent(key K, mapping func(key K) V) V {
-	return ComputeIfAbsent(m, key, mapping)
+func (m HashMap[K, V]) ComputeIfAbsent(key K, mapping func(key K) V) {
+	ComputeIfAbsent(m, key, mapping)
 }
 
 func (m HashMap[K, V]) ComputeIfPresent(key K,
