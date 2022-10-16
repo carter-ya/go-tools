@@ -100,3 +100,33 @@ More details can be found in the [collectors.go](stream/collectors.go) file.
 6. _map.KeysAsStream (get all keys of a map as a stream)
 7. _map.ValuesAsStream (get all values of a map as a stream)
 8. _map.MapAsStream (get all key-value pairs of a map as a stream)
+
+##### Map interface
+More details can be found in the [map.go](collection/map/map.go) file.
+1. Put
+2. PutIfAbsent
+3. PutAll
+4. ComputeIfAbsent
+5. ComputeIfPresent
+6. Get
+7. GetOrDefault
+8. ContainsKey
+9. Keys
+10. Values
+11. ForEach
+12. Remove
+13. RemoveIf
+14. Clear
+15. IsEmpty
+16. Size
+17. AsBuiltinMap
+
+##### HashMap
+It is based on the builtin `map`, so it is not thread-safe.
+```go
+type HashMap[K comparable, V any] map[K]V
+```
+How to create a HashMap
+1. `NewHashMap()`
+2. `NewHashMapWithSize(size int)`
+3. `NewHashMapFromBuiltinMap(m map[K]V)`
