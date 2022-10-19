@@ -139,3 +139,38 @@ How to create a LinkedHashMap
 1. `NewLinkedHashMap()`
 2. `NewLinkedHashMapWithSize(size int)`
 3. `NewLinkedHashMapWithMap(m Map[K]V)`
+
+##### Set interface
+More details can be found in the [set.go](collection/set/set.go) file.
+1. Add
+2. Contains
+3. Remove
+4. IsEmpty
+5. Size
+6. ForEach
+7. Clear
+8. AsSlice
+9. Stream
+
+##### HashSet
+It is based on the builtin `map`, so it is not thread-safe.
+```go
+type HashSet[E comparable] map[T]struct{}
+```
+
+How to create a HashSet
+1. `NewHashSet()`
+2. `NewHashSetWithSize(size int)`
+3. `NewHashSetWithSlice(s []E)`
+4. `NewHashSetFromSet(s Set[E])`
+5. `NewHashSetFromStream(s stream.Stream)`
+
+##### LinkedHashSet
+It is based on the `LinkedHashMap`, so it is not thread-safe.
+
+How to create a LinkedHashSet
+1. `NewLinkedHashSet()`
+2. `NewLinkedHashSetWithSize(size int)`
+3. `NewLinkedHashSetWithSlice(s []E)`
+4. `NewLinkedHashSetFromSet(s Set[E])`
+5. `NewLinkedHashSetFromStream(s stream.Stream)`
