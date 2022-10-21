@@ -91,6 +91,7 @@ More details can be found in the [collectors.go](stream/collectors.go) file.
 ### Collection
 #### Slice
 1. collection.Shuffle (shuffle a slice)
+2. collection.Reverse (reverse a slice)
 #### Map
 1. _map.Keys (get all keys of a map)
 2. _map.Values (get all values of a map)
