@@ -7,6 +7,7 @@ import (
 
 // List is a list of elements.
 type List[E comparable] interface {
+	collection.Collection[E]
 	// Add adds an element to the list.
 	Add(e E) bool
 	// AddTo adds an element to the list at the specified index.

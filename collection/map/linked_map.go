@@ -101,6 +101,16 @@ func (m *LinkedHashMap[K, V]) ForEach(consumer func(key K, value V)) {
 	}
 }
 
+func (m *LinkedHashMap[K, V]) ForEachIndexed(consumer func(index int, key K, value V) (stop bool)) {
+	index := 0
+	for e := m.list.Front(); e != nil; e = e.Next() {
+		if consumer(index, e.Value.(K), m.hashMap[e.Value.(K)]) {
+			break
+		}
+		index++
+	}
+}
+
 func (m *LinkedHashMap[K, V]) Remove(key K) (oldValue V, oldValueFound bool) {
 	oldValue, oldValueFound = m.hashMap.Remove(key)
 	if oldValueFound {

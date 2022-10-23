@@ -38,6 +38,9 @@ type Map[K comparable, V any] interface {
 	Values() []V
 	// ForEach iterates over all key-value pairs in the map.
 	ForEach(consumer func(key K, value V))
+	// ForEachIndexed iterates over all key-value pairs in the map.
+	// The consumer function returns true to stop iterating.
+	ForEachIndexed(consumer func(index int, key K, value V) (stop bool))
 
 	// Remove removes the key-value pair with the given key from the map. If the key exists, the value is returned.
 	Remove(key K) (value V, found bool)
@@ -117,6 +120,10 @@ func (m HashMap[K, V]) GetOrDefault(key K, defaultValue V) V {
 
 func (m HashMap[K, V]) ForEach(consumer func(key K, value V)) {
 	ForEach(m, consumer)
+}
+
+func (m HashMap[K, V]) ForEachIndexed(consumer func(index int, key K, value V) (stop bool)) {
+	ForEachIndexed(m, consumer)
 }
 
 func (m HashMap[K, V]) ContainsKey(key K) bool {

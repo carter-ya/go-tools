@@ -96,11 +96,14 @@ More details can be found in the [collectors.go](stream/collectors.go) file.
 1. _map.Keys (get all keys of a map)
 2. _map.Values (get all values of a map)
 3. _map.ForEach (iterate a map)
-4. _map.GetOrDefault (get value of a map by key, if the key does not exist, return the default value)
-5. _map.ComputeIfAbsent (get value of a map by key, if the key does not exist, compute the value and put it into the map)
-6. _map.KeysAsStream (get all keys of a map as a stream)
-7. _map.ValuesAsStream (get all values of a map as a stream)
-8. _map.MapAsStream (get all key-value pairs of a map as a stream)
+4. _map.ForEachIndexed (iterate a map with index)
+5. _map.Copy (copy a map)
+6. _map.CopyTo (copy a map to another map)
+7. _map.GetOrDefault (get value of a map by key, if the key does not exist, return the default value)
+8. _map.ComputeIfAbsent (get value of a map by key, if the key does not exist, compute the value and put it into the map)
+9. _map.KeysAsStream (get all keys of a map as a stream)
+10. _map.ValuesAsStream (get all values of a map as a stream)
+11. _map.MapAsStream (get all key-value pairs of a map as a stream)
 
 ##### Map interface
 More details can be found in the [map.go](collection/map/map.go) file.
@@ -115,12 +118,13 @@ More details can be found in the [map.go](collection/map/map.go) file.
 9. Keys
 10. Values
 11. ForEach
-12. Remove
-13. RemoveIf
-14. Clear
-15. IsEmpty
-16. Size
-17. AsBuiltinMap
+12. ForEachIndexed
+13. Remove
+14. RemoveIf
+15. Clear
+16. IsEmpty
+17. Size
+18. AsBuiltinMap
 
 ##### HashMap
 It is based on the builtin `map`, so it is not thread-safe.
@@ -141,17 +145,69 @@ How to create a LinkedHashMap
 2. `NewLinkedHashMapWithSize(size int)`
 3. `NewLinkedHashMapWithMap(m Map[K]V)`
 
+##### Collection interface
+More details can be found in the [collection.go](collection/collection.go) file.
+1. Add
+2. AddAll
+3. Remove
+4. RemoveAll
+5. RemoveIff
+6. RetainAll
+7. Clear
+8. Contains
+9. ContainsAll
+10. IsEmpty
+11. Size
+12. ForEach
+13. ForEachIndexed
+14. AsSlice
+15. Stream
+
+##### List interface
+More details can be found in the [list.go](collection/list/list.go) file.
+1. Add
+2. AddAll
+3. Remove
+4. RemoveAll
+5. RemoveIff
+6. RetainAll
+7. Clear
+8. Contains
+9. ContainsAll
+10. IsEmpty
+11. Size
+12. ForEach
+13. ForEachIndexed
+14. AsSlice
+15. Stream
+
+##### ArrayList
+It is based on the builtin `slice`, so it is not thread-safe.
+
+How to create a ArrayList
+1. `NewArrayList()`
+2. `NewArrayListWithSize(size int)`
+3. `NewArrayListWithSlice(s []T)`
+4. `NewArrayListWithCollection(c Collection[T])`
+5. `NewArrayListWithStream(s Stream[T])`
+
 ##### Set interface
 More details can be found in the [set.go](collection/set/set.go) file.
 1. Add
-2. Contains
+2. AddAll
 3. Remove
-4. IsEmpty
-5. Size
-6. ForEach
+4. RemoveAll
+5. RemoveIf
+6. RetainAll
 7. Clear
-8. AsSlice
-9. Stream
+8. Contains
+9. ContainsAll
+10. IsEmpty
+11. Size
+12. ForEach
+13. ForEachIndexed
+14. AsSlice
+15. Stream
 
 ##### HashSet
 It is based on the builtin `map`, so it is not thread-safe.
@@ -163,7 +219,7 @@ How to create a HashSet
 1. `NewHashSet()`
 2. `NewHashSetWithSize(size int)`
 3. `NewHashSetWithSlice(s []E)`
-4. `NewHashSetFromSet(s Set[E])`
+4. `NewHashSetFromCollection(s Set[E])`
 5. `NewHashSetFromStream(s stream.Stream)`
 
 ##### LinkedHashSet
@@ -173,5 +229,5 @@ How to create a LinkedHashSet
 1. `NewLinkedHashSet()`
 2. `NewLinkedHashSetWithSize(size int)`
 3. `NewLinkedHashSetWithSlice(s []E)`
-4. `NewLinkedHashSetFromSet(s Set[E])`
+4. `NewLinkedHashSetFromCollection(s Set[E])`
 5. `NewLinkedHashSetFromStream(s stream.Stream)`

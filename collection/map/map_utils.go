@@ -44,6 +44,18 @@ func ForEach[M ~map[K]V, K comparable, V any](m M, consumer func(k K, v V)) {
 	}
 }
 
+// ForEachIndexed iterates over the map and calls the consumer function for each key-value pair.
+// The consumer function returns true to stop iterating.
+func ForEachIndexed[M ~map[K]V, K comparable, V any](m M, consumer func(index int, k K, v V) (stop bool)) {
+	index := 0
+	for k, v := range m {
+		if consumer(index, k, v) {
+			break
+		}
+		index++
+	}
+}
+
 // GetOrDefault returns the value for the given key if it exists, otherwise returns the default value.
 func GetOrDefault[M ~map[K]V, K comparable, V any](m M, key K, defaultValue V) V {
 	if value, ok := m[key]; ok {

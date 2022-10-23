@@ -1,6 +1,7 @@
 package set
 
 import (
+	"github.com/carter-ya/go-tools/collection"
 	_map "github.com/carter-ya/go-tools/collection/map"
 	"github.com/carter-ya/go-tools/stream"
 )
@@ -29,11 +30,9 @@ func NewLinkedHashSetFromSlice[E comparable](slice []E) LinkedHashSet[E] {
 	return lhs
 }
 
-func NewLinkedHashSetFromSet[E comparable](s Set[E]) LinkedHashSet[E] {
-	lhs := NewLinkedHashSetWithSize[E](s.Size())
-	s.ForEach(func(e E) {
-		lhs.Add(e)
-	})
+func NewLinkedHashSetFromCollection[E comparable](c collection.Collection[E]) LinkedHashSet[E] {
+	lhs := NewLinkedHashSetWithSize[E](c.Size())
+	lhs.AddAll(c)
 	return lhs
 }
 
@@ -45,18 +44,54 @@ func NewLinkedHashSetFromStream[E comparable](stream stream.Stream) LinkedHashSe
 	return lhs
 }
 
-func (lhs *LinkedHashSet[E]) Add(e E) (found bool) {
-	_, found = lhs.linkedMap.Put(e, struct{}{})
+func (lhs *LinkedHashSet[E]) Add(e E) bool {
+	lhs.linkedMap.Put(e, struct{}{})
+	return true
+}
+
+func (lhs *LinkedHashSet[E]) AddAll(other collection.Collection[E]) bool {
+	other.ForEach(func(e E) {
+		lhs.linkedMap.Put(e, struct{}{})
+	})
+	return true
+}
+
+func (lhs *LinkedHashSet[E]) Remove(e E) (found bool) {
+	_, found = lhs.linkedMap.Remove(e)
 	return
+}
+
+func (lhs *LinkedHashSet[E]) RemoveAll(other collection.Collection[E]) bool {
+	other.ForEach(func(e E) {
+		lhs.linkedMap.Remove(e)
+	})
+	return true
+}
+
+func (lhs *LinkedHashSet[E]) RetainAll(other collection.Collection[E]) bool {
+	lhs.linkedMap.ForEach(func(e E, _ struct{}) {
+		if !other.Contains(e) {
+			lhs.linkedMap.Remove(e)
+		}
+	})
+	return true
+}
+
+func (lhs *LinkedHashSet[E]) Clear() {
+	lhs.linkedMap.Clear()
 }
 
 func (lhs *LinkedHashSet[E]) Contains(e E) bool {
 	return lhs.linkedMap.ContainsKey(e)
 }
 
-func (lhs *LinkedHashSet[E]) Remove(e E) (found bool) {
-	_, found = lhs.linkedMap.Remove(e)
-	return
+func (lhs *LinkedHashSet[E]) ContainsAll(other collection.Collection[E]) bool {
+	yes := true
+	other.ForEachIndexed(func(_ int, e E) (stop bool) {
+		yes = lhs.linkedMap.ContainsKey(e)
+		return !yes
+	})
+	return yes
 }
 
 func (lhs *LinkedHashSet[E]) IsEmpty() bool {
@@ -73,8 +108,10 @@ func (lhs *LinkedHashSet[E]) ForEach(consumer func(e E)) {
 	})
 }
 
-func (lhs *LinkedHashSet[E]) Clear() {
-	lhs.linkedMap.Clear()
+func (lhs *LinkedHashSet[E]) ForEachIndexed(consumer func(index int, e E) (stop bool)) {
+	lhs.linkedMap.ForEachIndexed(func(index int, key E, _ struct{}) (stop bool) {
+		return consumer(index, key)
+	})
 }
 
 func (lhs *LinkedHashSet[E]) AsSlice() []E {
