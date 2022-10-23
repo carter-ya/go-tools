@@ -197,3 +197,7 @@ func (al *ArrayList[E]) AsSlice() []E {
 func (al *ArrayList[E]) Stream() stream.Stream {
 	return stream.Just(al.data)
 }
+
+func (al *ArrayList[E]) String() string {
+	return collection.String[E](al)
+}

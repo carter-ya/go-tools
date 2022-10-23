@@ -1,8 +1,12 @@
 package collection
 
-import "github.com/carter-ya/go-tools/stream"
+import (
+	"fmt"
+	"github.com/carter-ya/go-tools/stream"
+)
 
 type Collection[E comparable] interface {
+	fmt.Stringer
 	// Add adds an element to the collection.
 	// Returns true if the element was added.
 	Add(e E) bool

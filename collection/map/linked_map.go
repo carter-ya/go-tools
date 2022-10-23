@@ -149,3 +149,7 @@ func (m *LinkedHashMap[K, V]) Size() int {
 func (m *LinkedHashMap[K, V]) AsBuiltinMap() map[K]V {
 	return m.hashMap.AsBuiltinMap()
 }
+
+func (m *LinkedHashMap[K, V]) String() string {
+	return MapString[K, V](m)
+}

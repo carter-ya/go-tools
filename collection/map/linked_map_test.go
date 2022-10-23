@@ -27,3 +27,11 @@ func TestLinkedHashMap_Keys(t *testing.T) {
 	}
 	require.Equal(t, 0, m.Size())
 }
+
+func TestLinkedHashMap_String(t *testing.T) {
+	var m Map[string, int] = NewHashMap[string, int]()
+	m.Put("a", 1)
+	m.Put("b", 2)
+	m.Put("c", 3)
+	require.Equal(t, "{a: 1, b: 2, c: 3}", m.String())
+}

@@ -125,3 +125,11 @@ func TestArrayList_ContainsAll(t *testing.T) {
 	l2.Add(100)
 	require.False(t, l.ContainsAll(l2))
 }
+
+func TestArrayList_String(t *testing.T) {
+	l := NewArrayList[int]()
+	l.Add(1)
+	l.Add(2)
+	l.Add(3)
+	require.Equal(t, "[1, 2, 3]", l.String())
+}

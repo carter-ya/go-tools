@@ -175,3 +175,7 @@ func (h HashSet[E]) Stream() stream.Stream {
 		}
 	})
 }
+
+func (h HashSet[E]) String() string {
+	return collection.String[E](h)
+}

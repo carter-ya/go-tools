@@ -1,5 +1,7 @@
 package _map
 
+import "fmt"
+
 type RemappingAction int
 
 const (
@@ -12,6 +14,7 @@ const (
 )
 
 type Map[K comparable, V any] interface {
+	fmt.Stringer
 	// Put adds a key-value pair to the map. If the key already exists, the old value is replaced and returned.
 	Put(key K, value V) (oldValue V, oldValueFound bool)
 	// PutIfAbsent adds a key-value pair to the map if the key does not exist.
@@ -166,4 +169,8 @@ func (m HashMap[K, V]) Size() int {
 
 func (m HashMap[K, V]) AsBuiltinMap() map[K]V {
 	return Copy(m)
+}
+
+func (m HashMap[K, V]) String() string {
+	return MapString[K, V](m)
 }
