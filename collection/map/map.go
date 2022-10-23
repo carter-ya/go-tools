@@ -52,6 +52,8 @@ type Map[K comparable, V any] interface {
 	Size() int
 
 	// AsBuiltinMap returns the map as a builtin map.
+	//
+	// The returned map is a copy of the map.
 	AsBuiltinMap() map[K]V
 }
 
@@ -156,5 +158,5 @@ func (m HashMap[K, V]) Size() int {
 }
 
 func (m HashMap[K, V]) AsBuiltinMap() map[K]V {
-	return m
+	return Copy(m)
 }

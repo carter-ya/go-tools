@@ -20,6 +20,23 @@ func Values[M ~map[K]V, K comparable, V any](m M) []V {
 	return values
 }
 
+// Copy returns a copy of the map.
+func Copy[M ~map[K]V, K comparable, V any](src M) M {
+	c := make(M, len(src))
+	for k, v := range src {
+		c[k] = v
+	}
+	return c
+}
+
+// CopyTo copies the map to the destination map.
+func CopyTo[M ~map[K]V, K comparable, V any](src M, dst M) M {
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}
+
 // ForEach iterates over the map and calls the consumer function for each key-value pair.
 func ForEach[M ~map[K]V, K comparable, V any](m M, consumer func(k K, v V)) {
 	for k, v := range m {
