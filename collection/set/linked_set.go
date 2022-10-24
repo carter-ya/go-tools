@@ -136,3 +136,11 @@ func (lhs *LinkedHashSet[E]) Stream() stream.Stream {
 func (lhs *LinkedHashSet[E]) String() string {
 	return collection.String[E](lhs)
 }
+
+func (lhs *LinkedHashSet[E]) MarshalJSON() ([]byte, error) {
+	return collection.MarshalJSON[E](lhs)
+}
+
+func (lhs *LinkedHashSet[E]) UnmarshalJSON(bytes []byte) error {
+	return collection.UnmarshalJSON[E](lhs, bytes)
+}

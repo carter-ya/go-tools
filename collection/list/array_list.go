@@ -1,6 +1,7 @@
 package list
 
 import (
+	"encoding/json"
 	"github.com/carter-ya/go-tools/collection"
 	"github.com/carter-ya/go-tools/stream"
 )
@@ -200,4 +201,18 @@ func (al *ArrayList[E]) Stream() stream.Stream {
 
 func (al *ArrayList[E]) String() string {
 	return collection.String[E](al)
+}
+
+func (al *ArrayList[E]) MarshalJSON() ([]byte, error) {
+	return collection.MarshalJSON[E](al)
+}
+
+func (al *ArrayList[E]) UnmarshalJSON(data []byte) error {
+	items := make([]E, 0)
+	err := json.Unmarshal(data, &items)
+	if err != nil {
+		return err
+	}
+	al.data = items
+	return nil
 }
