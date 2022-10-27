@@ -1,6 +1,7 @@
 package _map
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -34,4 +35,27 @@ func TestLinkedHashMap_String(t *testing.T) {
 	m.Put("b", 2)
 	m.Put("c", 3)
 	require.Equal(t, "{a: 1, b: 2, c: 3}", m.String())
+}
+
+func TestLinkedHashMap_MarshalJSON(t *testing.T) {
+	var m Map[int, int] = NewLinkedHashMap[int, int]()
+	for i := 0; i < 100; i++ {
+		m.Put(i, i)
+	}
+	bz, err := json.Marshal(m)
+	require.NoError(t, err)
+	t.Log(string(bz))
+
+	var unmarshalM *LinkedHashMap[int, int]
+	err = json.Unmarshal(bz, &unmarshalM)
+	require.NoError(t, err)
+	require.Equal(t, m, unmarshalM)
+
+	var m2 Map[string, int] = NewLinkedHashMap[string, int]()
+	for i := 0; i < 100; i++ {
+		m2.Put(fmt.Sprintf("%d", i), i)
+	}
+	bz, err = json.Marshal(m2)
+	require.NoError(t, err)
+	t.Log(string(bz))
 }

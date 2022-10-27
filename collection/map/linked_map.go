@@ -153,3 +153,13 @@ func (m *LinkedHashMap[K, V]) AsBuiltinMap() map[K]V {
 func (m *LinkedHashMap[K, V]) String() string {
 	return MapString[K, V](m)
 }
+
+func (m *LinkedHashMap[K, V]) MarshalJSON() ([]byte, error) {
+	return MarshalJSON[K, V](m)
+}
+
+func (m *LinkedHashMap[K, V]) UnmarshalJSON(bytes []byte) error {
+	m.hashMap = NewHashMap[K, V]()
+	m.list = list.New()
+	return UnmarshalJSON[K, V](m, bytes)
+}
