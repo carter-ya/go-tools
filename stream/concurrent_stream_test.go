@@ -1,8 +1,9 @@
 package stream
 
 import (
-	"github.com/carter-ya/go-tools/collection"
+	"github.com/carter-ya/go-tools/stream/collector"
 	"github.com/stretchr/testify/require"
+	"math/rand"
 	"sort"
 	"sync"
 	"testing"
@@ -227,7 +228,7 @@ func TestConcurrentStream_Sort(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			items := test.stream.ToIfaceSlice()
-			collection.Shuffle(items)
+			Shuffle(items)
 
 			actualItems := Just(items, WithParallelism(test.parallelism)).Sort(func(i, j any) bool {
 				return i.(int64) < j.(int64)
@@ -264,7 +265,7 @@ func TestConcurrentStream_Distinct(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			items := test.stream.ToIfaceSlice()
-			collection.Shuffle(items)
+			Shuffle(items)
 
 			actualItems := Just(items, WithParallelism(test.parallelism)).Distinct(func(item any) any {
 				return item
@@ -735,9 +736,18 @@ func TestConcurrentStream_Collect(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			require.Equal(t, test.expect, test.stream.Collect(
-				MapSupplier[int64, int64](),
-				MapAccumulatorWithIgnoreDuplicate[int64, int64](Identify[int64]())),
+				NewToMapCollectorWithDuplicateHandler[int64, int64, int64](0, collector.Identify[int64](), collector.Identify[int64](), nil),
+			),
 			)
 		})
+	}
+}
+
+// Shuffle shuffles the slice in place.
+// See https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle.
+func Shuffle[T any](s []T) {
+	for i := len(s) - 1; i > 0; i-- {
+		idx := rand.Intn(i + 1)
+		s[i], s[idx] = s[idx], s[i]
 	}
 }

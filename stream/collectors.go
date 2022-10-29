@@ -2,136 +2,257 @@ package stream
 
 import (
 	"fmt"
+	"github.com/carter-ya/go-tools/stream/collector"
+	"golang.org/x/exp/constraints"
+	"strings"
 )
 
-// Identify returns the given item
-func Identify[V any]() func(v V) V {
-	return func(v V) V {
-		return v
-	}
-}
-
-// MapSupplier returns a supplier of map
-func MapSupplier[K comparable, V any]() SupplierFunc {
-	return func() any {
-		return make(map[K]V)
-	}
-}
-
-// MapSupplierWithSize returns a supplier of map with the given size
-func MapSupplierWithSize[K comparable, V any](size int) SupplierFunc {
-	return func() any {
-		return make(map[K]V, size)
-	}
-}
-
-// MapAccumulator returns an accumulator function that accumulates the given items into a map.
-// If the key of the item is already in the map, the panic will be raised.
+// NewToMapCollector returns a collector that accumulates
+// the input elements into a map whose keys and values are the result of applying
+// the provided mapping functions to the input elements.
 //
-// keyExtractor extracts the key from the given item. You can use Identify if the key-value pair are same.
-func MapAccumulator[K comparable, V any](keyExtractor func(v V) K) AccumulatorFunc {
-	return MapAccumulatorWithDuplicateHandler(keyExtractor, func(duplicateKey K, v1, v2 V) {
-		panic(fmt.Sprintf("duplicate key: %v, v1: %v, v2: %v", duplicateKey, v1, v2))
-	})
-}
-
-// MapAccumulatorWithIgnoreDuplicate returns an accumulator function that accumulates the given items into a map.
-// If the key of the item is already in the map, the old item will be replaced.
+// size is the expected size of the map.
 //
-// keyExtractor extracts the key from the given item. You can use Identify if the key-value pair are same.
-func MapAccumulatorWithIgnoreDuplicate[K comparable, V any](keyExtractor func(v V) K) AccumulatorFunc {
-	return MapAccumulatorWithDuplicateHandler(keyExtractor, func(duplicateKey K, v1, v2 V) {
-	})
-}
-
-// MapAccumulatorWithDuplicateHandler returns an accumulator function that accumulates the given items into a map
+// keyMapper is a function that maps the input element to a key.
 //
-// keyExtractor extracts the key from the given item. You can use Identify if the key-value pair are same.
+// Note: If the input elements contain duplicate keys, will panic.
 //
-// duplicateHandler handles the duplicate key
-func MapAccumulatorWithDuplicateHandler[K comparable, V any](
-	keyExtractor func(v V) K,
-	duplicateHandler func(duplicateKey K, v1, v2 V),
-) AccumulatorFunc {
-	return func(identity any, item any) any {
-		m := identity.(map[K]V)
-		key := keyExtractor(item.(V))
-		if old, ok := m[key]; ok {
-			duplicateHandler(key, old, item.(V))
-		}
-		m[key] = item.(V)
-		return m
-	}
+// Note: This collector is not routine-safe.
+func NewToMapCollector[T any, K comparable](
+	size int,
+	keyMapper func(T) K,
+) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	return NewToMapCollectorWithDuplicateHandler[T, K, T](
+		size, keyMapper, collector.Identify[T](),
+		func(duplicateKey K, v1, v2 T) {
+			panic(fmt.Sprintf("duplicate key: %v, v1: %v, v2: %v", duplicateKey, v1, v2))
+		},
+	)
 }
 
-// SliceSupplier returns a supplier of slice
-func SliceSupplier[V any]() SupplierFunc {
-	return func() any {
-		return make([]V, 0)
-	}
+// NewToMapWithIgnoreDuplicateCollector returns a collector that accumulates
+// the input elements into a map whose keys and values are the result of applying
+// the provided mapping functions to the input elements.
+//
+// size is the expected size of the map.
+//
+// keyMapper is a function that maps the input element to a key.
+//
+// Note: If the input elements contain duplicate keys, the last one will be kept.
+//
+// Note: This collector is not routine-safe.
+func NewToMapWithIgnoreDuplicateCollector[T any, K comparable](
+	size int,
+	keyMapper func(T) K,
+) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	return NewToMapCollectorWithDuplicateHandler[T, K, T](
+		size, keyMapper, collector.Identify[T](), nil,
+	)
 }
 
-// SliceSupplierWithSize returns a supplier of slice with the given size
-func SliceSupplierWithSize[V any](size int) SupplierFunc {
-	return func() any {
-		return make([]V, 0, size)
+// NewToMapCollectorWithDuplicateHandler returns a collector that accumulates
+// the input elements into a map whose keys and values are the result of applying
+// the provided mapping functions to the input elements.
+//
+// size is the expected size of the map.
+//
+// keyMapper is a function that maps the input element to a key.
+//
+// valueMapper is a function that maps the input element to a value.
+//
+// duplicateHandler is a function that handles the duplicate key. If it is nil, will ignore the duplicate key.
+//
+// Note: This collector is not routine-safe.
+func NewToMapCollectorWithDuplicateHandler[T any, K comparable, V any](
+	size int,
+	keyMapper func(T) K,
+	valueMapper func(T) V,
+	duplicateHandler func(duplicateKey K, v1 V, v2 V),
+) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewToMapCollectorWithDuplicateHandler[T, K, V](
+		size, keyMapper, valueMapper, duplicateHandler,
+	)
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(map[K]V), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(map[K]V))
+	}
+	return supplier, accumulator, finisher
 }
 
-// SliceAccumulator returns an accumulator function that accumulates the given items into a slice
-func SliceAccumulator[V any]() AccumulatorFunc {
-	return func(identity any, item any) any {
-		return append(identity.([]V), item.(V))
+func NewToSliceCollector[T any](
+	size int,
+) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewToSliceCollector[T](size)
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*collector.SliceContainer[T]), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*collector.SliceContainer[T]))
+	}
+	return supplier, accumulator, finisher
 }
 
-// JoiningSupplier returns a supplier of string
-func JoiningSupplier[V any]() SupplierFunc {
-	return func() any {
-		return ""
+func NewJoiningCollector[T any](separator string) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewJoiningCollector[T](separator)
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*strings.Builder), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*strings.Builder))
+	}
+	return supplier, accumulator, finisher
 }
 
-// JoiningAccumulator returns an accumulator function that accumulates the given items into a string
-func JoiningAccumulator[V any](separator string) AccumulatorFunc {
-	return func(identity any, item any) any {
-		s := identity.(string)
-		if len(s) > 0 {
-			s += separator
-		}
-		s += fmt.Sprint(item)
-		return s
+func NewGroupByCollector[T any, K comparable](
+	keyMapper func(T) K,
+) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewGroupByCollector[T, K](keyMapper)
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(map[K][]T), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(map[K][]T))
+	}
+	return supplier, accumulator, finisher
 }
 
-// GroupBySupplier returns a supplier of map
-func GroupBySupplier[K comparable, V any]() SupplierFunc {
-	return func() any {
-		return make(map[K][]V)
+func NewCountCollector[T any]() (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewCountCollector[T]()
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*collector.CountContainer), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*collector.CountContainer))
+	}
+	return supplier, accumulator, finisher
 }
 
-// GroupBySupplierWithSize returns a supplier of map with the given size
-func GroupBySupplierWithSize[K comparable, V any](size int) SupplierFunc {
-	return func() any {
-		return make(map[K][]V, size)
+func NewSumCollector[T any, R constraints.Integer | constraints.Float](
+	mapper func(T) R) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewSumCollector[T, R](mapper)
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*collector.SumContainer[R]), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*collector.SumContainer[R]))
+	}
+	return supplier, accumulator, finisher
 }
 
-// GroupByAccumulator returns an accumulator function that accumulates the given items into a map
-func GroupByAccumulator[K comparable, V any](keyExtractor func(v V) K) AccumulatorFunc {
-	return GroupByAccumulatorWithValueExtractor(keyExtractor, Identify[V]())
+func NewAvgCollector[T any, R constraints.Integer | constraints.Float](
+	mapper func(T) R) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewAvgCollector[T, R](mapper)
+
+	supplier = func() any {
+		return c.Supplier()()
+	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*collector.AvgContainer[R]), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*collector.AvgContainer[R]))
+	}
+	return supplier, accumulator, finisher
 }
 
-// GroupByAccumulatorWithValueExtractor returns an accumulator function that accumulates the given items into a map
-func GroupByAccumulatorWithValueExtractor[K comparable, V, R any](
-	keyExtractor func(v V) K,
-	valueExtractor func(v V) R,
-) AccumulatorFunc {
-	return func(identity any, item any) any {
-		m := identity.(map[K][]R)
-		key := keyExtractor(item.(V))
-		m[key] = append(m[key], valueExtractor(item.(V)))
-		return m
+func NewMaxCollector[T any, R constraints.Ordered](
+	mapper func(T) R) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewMaxCollector[T, R](mapper)
+
+	supplier = func() any {
+		return c.Supplier()()
 	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*collector.MaxContainer[R]), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*collector.MaxContainer[R]))
+	}
+	return supplier, accumulator, finisher
+}
+
+func NewMinCollector[T any, R constraints.Ordered](
+	mapper func(T) R) (
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) {
+	c := collector.NewMinCollector[T, R](mapper)
+
+	supplier = func() any {
+		return c.Supplier()()
+	}
+	accumulator = func(container, item any) {
+		c.Accumulator()(container.(*collector.MinContainer[R]), item.(T))
+	}
+	finisher = func(container any) any {
+		return c.Finisher()(container.(*collector.MinContainer[R]))
+	}
+	return supplier, accumulator, finisher
 }
