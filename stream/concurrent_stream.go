@@ -382,6 +382,11 @@ func (cs *concurrentStream) ToIfaceSlice(opts ...Option) []any {
 	return ifaces.([]any)
 }
 
+func (cs *concurrentStream) ApplyOptions(opts ...Option) Stream {
+	cs.applyOptions(opts...)
+	return cs
+}
+
 func (cs *concurrentStream) Collect(
 	supplier func() any,
 	accumulator func(container, item any),
