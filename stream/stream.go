@@ -1,6 +1,8 @@
 package stream
 
-import "golang.org/x/exp/constraints"
+import (
+	"golang.org/x/exp/constraints"
+)
 
 type (
 	// source is the channel that the generator function writes to,
@@ -80,16 +82,32 @@ type Stream interface {
 	ForEach(consumer ConsumeFunc, opts ...Option)
 	// ToIfaceSlice returns the stream as a slice of interface{}
 	ToIfaceSlice(opts ...Option) []any
+	// ApplyOptions applies the given options to the stream
+	ApplyOptions(opts ...Option) Stream
 	// Collect collects the stream to a supplier of the given type.
 	//
-	// The supplier should return a new instance of the type to collect to.
-	// You can use MapSupplier to create s supplier.
+	// You usually don't need to set these 3 parameters directly unless you want to customize the collector.
+	// Here are some common collectors:
+	// - NewToMapCollector
+	// - NewToMapWithIgnoreDuplicateCollector
+	// - NewToMapCollectorWithDuplicateHandler
+	// - NewToSliceCollector
+	// - NewJoiningCollector
+	// - NewGroupByCollector
+	// - NewCountCollector
+	// - NewSumCollector
+	// - NewAvgCollector
+	// - NewMaxCollector
+	// - NewMinCollector
 	//
-	// The accumulator should add the item to the supplier.
-	// You can use MapAccumulator to create an accumulator.
-	Collect(supplier SupplierFunc, accumulator AccumulatorFunc, opts ...Option) any
+	// Please refer to the example in collectors_test.go for more details.
+	Collect(
+		supplier func() any,
+		accumulator func(container, item any),
+		finisher func(container any) any,
+	) any
 	// Close closes the stream
-	Close(opts ...Option)
+	Close()
 }
 
 // From returns a stream from the given generator function

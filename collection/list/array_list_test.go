@@ -1,6 +1,7 @@
 package list
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -124,4 +125,73 @@ func TestArrayList_ContainsAll(t *testing.T) {
 	require.True(t, l.ContainsAll(l2))
 	l2.Add(100)
 	require.False(t, l.ContainsAll(l2))
+}
+
+func TestArrayList_String(t *testing.T) {
+	l := NewArrayList[int]()
+	l.Add(1)
+	l.Add(2)
+	l.Add(3)
+	require.Equal(t, "[1, 2, 3]", l.String())
+}
+
+func TestArrayList_MarshalJSON(t *testing.T) {
+	var l ArrayList[int]
+	bz, err := l.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, "[]", string(bz))
+
+	l.Add(1)
+	l.Add(2)
+	l.Add(3)
+	bz, err = l.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, "[1,2,3]", string(bz))
+
+	var l2 ArrayList[string]
+	l2.Add("1")
+	l2.Add("2")
+	l2.Add("3")
+	bz, err = l2.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, "[\"1\",\"2\",\"3\"]", string(bz))
+
+	var l3 = NewArrayListFromSlice[person]([]person{
+		{
+			Name: "alice",
+			Age:  21,
+		},
+		{
+			Name: "bob",
+			Age:  22,
+		},
+	})
+
+	bz, err = l3.MarshalJSON()
+	require.NoError(t, err)
+	require.Equal(t, "[{\"name\":\"alice\",\"age\":21},{\"name\":\"bob\",\"age\":22}]", string(bz))
+}
+
+func TestArrayList_UnmarshalJSON(t *testing.T) {
+	var l = NewArrayListFromSlice[person]([]person{
+		{
+			Name: "alice",
+			Age:  21,
+		},
+		{
+			Name: "bob",
+			Age:  22,
+		},
+	})
+	bz, err := l.MarshalJSON()
+	require.NoError(t, err)
+	var l2 *ArrayList[person]
+	err = json.Unmarshal(bz, &l2)
+	require.NoError(t, err)
+	require.Equal(t, l, l2)
+}
+
+type person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
 }

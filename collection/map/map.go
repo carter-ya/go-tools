@@ -1,5 +1,10 @@
 package _map
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type RemappingAction int
 
 const (
@@ -12,6 +17,9 @@ const (
 )
 
 type Map[K comparable, V any] interface {
+	fmt.Stringer
+	json.Marshaler
+	json.Unmarshaler
 	// Put adds a key-value pair to the map. If the key already exists, the old value is replaced and returned.
 	Put(key K, value V) (oldValue V, oldValueFound bool)
 	// PutIfAbsent adds a key-value pair to the map if the key does not exist.
@@ -166,4 +174,16 @@ func (m HashMap[K, V]) Size() int {
 
 func (m HashMap[K, V]) AsBuiltinMap() map[K]V {
 	return Copy(m)
+}
+
+func (m HashMap[K, V]) String() string {
+	return MapString[K, V](m)
+}
+
+func (m HashMap[K, V]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m)
+}
+
+func (m HashMap[K, V]) UnmarshalJSON(bytes []byte) error {
+	return json.Unmarshal(bytes, &m)
 }

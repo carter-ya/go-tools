@@ -1,137 +1,100 @@
 package _map
 
-import "github.com/carter-ya/go-tools/stream"
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+)
 
-// Keys returns the keys of the map.
-func Keys[M ~map[K]V, K comparable, V any](m M) []K {
-	keys := make([]K, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-// Values returns the values of the map.
-func Values[M ~map[K]V, K comparable, V any](m M) []V {
-	values := make([]V, 0, len(m))
-	for _, v := range m {
-		values = append(values, v)
-	}
-	return values
-}
-
-// Copy returns a copy of the map.
-func Copy[M ~map[K]V, K comparable, V any](src M) M {
-	c := make(M, len(src))
-	for k, v := range src {
-		c[k] = v
-	}
-	return c
-}
-
-// CopyTo copies the map to the destination map.
-func CopyTo[M ~map[K]V, K comparable, V any](src M, dst M) M {
-	for k, v := range src {
-		dst[k] = v
-	}
-	return dst
-}
-
-// ForEach iterates over the map and calls the consumer function for each key-value pair.
-func ForEach[M ~map[K]V, K comparable, V any](m M, consumer func(k K, v V)) {
-	for k, v := range m {
-		consumer(k, v)
-	}
-}
-
-// ForEachIndexed iterates over the map and calls the consumer function for each key-value pair.
-// The consumer function returns true to stop iterating.
-func ForEachIndexed[M ~map[K]V, K comparable, V any](m M, consumer func(index int, k K, v V) (stop bool)) {
-	index := 0
-	for k, v := range m {
-		if consumer(index, k, v) {
-			break
-		}
-		index++
-	}
-}
-
-// GetOrDefault returns the value for the given key if it exists, otherwise returns the default value.
-func GetOrDefault[M ~map[K]V, K comparable, V any](m M, key K, defaultValue V) V {
-	if value, ok := m[key]; ok {
-		return value
-	}
-	return defaultValue
-}
-
-// PutAll adds all key-value pairs from the other map to this map.
-func PutAll[M ~map[K]V, K comparable, V any](m M, other M) {
-	for k, v := range other {
-		m[k] = v
-	}
-}
-
-// ComputeIfAbsent computes the value for the given key if it does not exist.
-func ComputeIfAbsent[M ~map[K]V, K comparable, V any](m M, key K, mapping func(k K) V) {
-	if _, ok := m[key]; ok {
-		return
-	}
-	value := mapping(key)
-	m[key] = value
-}
-
-// ComputeIfPresent computes the value for the given key if it exists.
-func ComputeIfPresent[M ~map[K]V, K comparable, V any](
-	m M, key K,
-	remapping func(key K, oldValue V) (newValue V, action RemappingAction),
-) {
-	if oldValue, ok := m[key]; ok {
-		newValue, action := remapping(key, oldValue)
-		switch action {
-		case Replace:
-			m[key] = newValue
-		case Remove:
-			delete(m, key)
-		}
-	}
-}
-
-// RemoveIf removes all key-value pairs for which the predicate returns true.
-func RemoveIf[M ~map[K]V, K comparable, V any](m M, predicate func(key K, value V) bool) {
-	// See https://go.dev/doc/go1.11#performance-compiler
-	for k, v := range m {
-		if predicate(k, v) {
-			delete(m, k)
-		}
-	}
-}
-
-// KeysAsStream returns the keys of the map as a stream.
-func KeysAsStream[M ~map[K]V, K comparable, V any](m M) stream.Stream {
-	return stream.From(func(source chan<- any) {
-		for k := range m {
-			source <- k
-		}
+// MapString returns a string representation of the map.
+func MapString[K comparable, V any](m Map[K, V]) string {
+	sb := strings.Builder{}
+	sb.WriteString("{")
+	separator := ""
+	m.ForEach(func(key K, value V) {
+		sb.WriteString(separator)
+		sb.WriteString(fmt.Sprint(key))
+		sb.WriteString(": ")
+		sb.WriteString(fmt.Sprint(value))
+		separator = ", "
 	})
+	sb.WriteString("}")
+	return sb.String()
 }
 
-// ValuesAsStream returns the values of the map as a stream.
-func ValuesAsStream[M ~map[K]V, K comparable, V any](m M) stream.Stream {
-	return stream.From(func(source chan<- any) {
-		for _, v := range m {
-			source <- v
+func MarshalJSON[K comparable, V any](m Map[K, V]) (bz []byte, err error) {
+	if m == nil {
+		return []byte("null"), nil
+	}
+	buf := bytes.NewBuffer(bz)
+	buf.WriteByte('{')
+	m.ForEachIndexed(func(index int, k K, v V) (stop bool) {
+		if index > 0 {
+			buf.WriteByte(',')
 		}
+
+		// write key
+		isString := reflect.ValueOf(k).Kind() == reflect.String
+		if !isString {
+			buf.WriteByte('"')
+		}
+		var keyBz []byte
+		keyBz, err = json.Marshal(k)
+		if err != nil {
+			return true
+		}
+		buf.Write(keyBz)
+		if !isString {
+			buf.WriteByte('"')
+		}
+
+		// write separator
+		buf.WriteByte(':')
+
+		// write value
+		var valueBz []byte
+		valueBz, err = json.Marshal(v)
+		if err != nil {
+			return true
+		}
+		buf.Write(valueBz)
+		return false
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
 }
 
-// MapAsStream returns the map as a stream of key-value Pair.
-func MapAsStream[M ~map[K]V, K comparable, V any](m M) stream.Stream {
-	return stream.From(func(source chan<- any) {
-		for k, v := range m {
-			source <- Pair[K, V]{
-				Key:   k,
-				Value: v,
-			}
+func UnmarshalJSON[K comparable, V any](m Map[K, V], data []byte) error {
+	items := make(map[K]V, 0)
+	err := json.Unmarshal(data, &items)
+	if err != nil {
+		return err
+	}
+	index := make(map[K]int, len(items))
+	keys := make([]K, 0, len(items))
+	for key := range items {
+		keys = append(keys, key)
+		keyBz, err := json.Marshal(key)
+		if err != nil {
+			return err
 		}
+		index[key] = bytes.Index(data, keyBz)
+		if index[key] == -1 {
+			return fmt.Errorf("key %v not found in data", key)
+		}
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return index[keys[i]] < index[keys[j]]
 	})
+	for _, key := range keys {
+		m.Put(key, items[key])
+	}
+	return nil
 }

@@ -382,12 +382,25 @@ func (cs *concurrentStream) ToIfaceSlice(opts ...Option) []any {
 	return ifaces.([]any)
 }
 
-func (cs *concurrentStream) Collect(supplier SupplierFunc, accumulator AccumulatorFunc, opts ...Option) any {
-	return cs.Reduce(supplier(), accumulator, opts...)
+func (cs *concurrentStream) ApplyOptions(opts ...Option) Stream {
+	cs.applyOptions(opts...)
+	return cs
 }
 
-func (cs *concurrentStream) Close(opts ...Option) {
-	cs.doStreamWithTerminate(func(item any) {}, opts...)
+func (cs *concurrentStream) Collect(
+	supplier func() any,
+	accumulator func(container, item any),
+	finisher func(container any) any,
+) any {
+	container := supplier()
+	cs.doStreamWithTerminate(func(item any) {
+		accumulator(container, item)
+	})
+	return finisher(container)
+}
+
+func (cs *concurrentStream) Close() {
+	cs.doStreamWithTerminate(func(item any) {})
 }
 
 func (cs *concurrentStream) doStream(fn func(item any, out chan<- any), opts ...Option) *concurrentStream {

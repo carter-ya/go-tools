@@ -68,13 +68,20 @@ func (lhs *LinkedHashSet[E]) RemoveAll(other collection.Collection[E]) bool {
 	return true
 }
 
-func (lhs *LinkedHashSet[E]) RetainAll(other collection.Collection[E]) bool {
+func (lhs *LinkedHashSet[E]) RemoveIf(predicate func(e E) bool) {
+	lhs.linkedMap.ForEach(func(e E, _ struct{}) {
+		if predicate(e) {
+			lhs.linkedMap.Remove(e)
+		}
+	})
+}
+
+func (lhs *LinkedHashSet[E]) RetainAll(other collection.Collection[E]) {
 	lhs.linkedMap.ForEach(func(e E, _ struct{}) {
 		if !other.Contains(e) {
 			lhs.linkedMap.Remove(e)
 		}
 	})
-	return true
 }
 
 func (lhs *LinkedHashSet[E]) Clear() {
@@ -124,4 +131,16 @@ func (lhs *LinkedHashSet[E]) Stream() stream.Stream {
 			source <- key
 		})
 	})
+}
+
+func (lhs *LinkedHashSet[E]) String() string {
+	return collection.String[E](lhs)
+}
+
+func (lhs *LinkedHashSet[E]) MarshalJSON() ([]byte, error) {
+	return collection.MarshalJSON[E](lhs)
+}
+
+func (lhs *LinkedHashSet[E]) UnmarshalJSON(bytes []byte) error {
+	return collection.UnmarshalJSON[E](lhs, bytes)
 }

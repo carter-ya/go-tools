@@ -175,3 +175,15 @@ func (h HashSet[E]) Stream() stream.Stream {
 		}
 	})
 }
+
+func (h HashSet[E]) String() string {
+	return collection.String[E](h)
+}
+
+func (h HashSet[E]) MarshalJSON() ([]byte, error) {
+	return collection.MarshalJSON[E](h)
+}
+
+func (h HashSet[E]) UnmarshalJSON(bytes []byte) error {
+	return collection.UnmarshalJSON[E](h, bytes)
+}

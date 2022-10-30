@@ -1,8 +1,15 @@
 package collection
 
-import "github.com/carter-ya/go-tools/stream"
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/carter-ya/go-tools/stream"
+)
 
 type Collection[E comparable] interface {
+	fmt.Stringer
+	json.Marshaler
+	json.Unmarshaler
 	// Add adds an element to the collection.
 	// Returns true if the element was added.
 	Add(e E) bool
