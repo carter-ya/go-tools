@@ -21,8 +21,8 @@ func NewToMapCollector[T any, K comparable](
 		size,
 		keyMapper,
 		Identify[T](),
-		func(duplicateKey K, v1, v2 T) {
-			panic(fmt.Sprintf("duplicate key: %v, v1: %v, v2: %v", duplicateKey, v1, v2))
+		func(duplicateKey K, existingValue, newValue T) T {
+			panic(fmt.Sprintf("duplicate key: %v, existingValue: %v, newValue: %v", duplicateKey, existingValue, newValue))
 		},
 	)
 }
@@ -46,7 +46,8 @@ func NewToMapWithIgnoreDuplicateCollector[T any, K comparable](
 		size,
 		keyMapper,
 		Identify[T](),
-		func(duplicateKey K, v1, v2 T) {
+		func(duplicateKey K, existingValue, newValue T) T {
+			return newValue
 		},
 	)
 }
@@ -68,7 +69,7 @@ func NewToMapCollectorWithDuplicateHandler[T any, K comparable, V any](
 	size int,
 	keyMapper func(T) K,
 	valueMapper func(T) V,
-	duplicateHandler func(duplicateKey K, v1 V, v2 V),
+	duplicateHandler func(duplicateKey K, existingValue V, newValue V) V,
 ) Collector[T, map[K]V, map[K]V] {
 	return NewBaseCollector[T, map[K]V, map[K]V](
 		func() map[K]V {
@@ -76,13 +77,12 @@ func NewToMapCollectorWithDuplicateHandler[T any, K comparable, V any](
 		},
 		func(container map[K]V, item T) {
 			key := keyMapper(item)
-			value := valueMapper(item)
-			if old, ok := container[key]; ok {
-				if duplicateHandler != nil {
-					duplicateHandler(key, old, value)
-				}
+			newValue := valueMapper(item)
+			if existingValue, ok := container[key]; ok && duplicateHandler != nil {
+				container[key] = duplicateHandler(key, existingValue, newValue)
+			} else {
+				container[key] = newValue
 			}
-			container[key] = value
 		},
 		func(container map[K]V) map[K]V {
 			return container

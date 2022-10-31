@@ -28,8 +28,8 @@ func NewToMapCollector[T any, K comparable](
 ) {
 	return NewToMapCollectorWithDuplicateHandler[T, K, T](
 		size, keyMapper, collector.Identify[T](),
-		func(duplicateKey K, v1, v2 T) {
-			panic(fmt.Sprintf("duplicate key: %v, v1: %v, v2: %v", duplicateKey, v1, v2))
+		func(duplicateKey K, existingValue T, newValue T) T {
+			panic(fmt.Sprintf("duplicate key: %v, existingValue: %v, newValue: %v", duplicateKey, existingValue, newValue))
 		},
 	)
 }
@@ -75,7 +75,7 @@ func NewToMapCollectorWithDuplicateHandler[T any, K comparable, V any](
 	size int,
 	keyMapper func(T) K,
 	valueMapper func(T) V,
-	duplicateHandler func(duplicateKey K, v1 V, v2 V),
+	duplicateHandler func(duplicateKey K, existingValue V, newValue V) V,
 ) (
 	supplier func() any,
 	accumulator func(container, item any),

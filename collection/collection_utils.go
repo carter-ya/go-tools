@@ -12,8 +12,7 @@ func String[E comparable](c Collection[E]) string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
 	itemsString := c.Stream().Collect(
-		stream.JoiningSupplier[E](),
-		stream.JoiningAccumulator[E](", "),
+		stream.NewJoiningCollector[E](", "),
 	).(string)
 	sb.WriteString(itemsString)
 	sb.WriteString("]")
